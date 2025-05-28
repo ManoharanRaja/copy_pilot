@@ -1,0 +1,9 @@
+FastAPI
+uvicorn
+pydantic
+azure-storage-file-datalake
+boto3
+smbprotocolnode -v
+npm -v
+schedule
+cryptography

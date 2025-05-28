@@ -1,0 +1,34 @@
+{
+  "source": {
+    "type": "local",
+    "path": "C:/Users/priya/Downloads/source_folder"
+  },
+  "target": {
+    "type": "azure_data_lake",
+    "path": "https://<your_account_name>.dfs.core.windows.net/<your_container_name>/target_folder"
+  },
+  "schedule": {
+    "enabled": true,
+    "frequency": "daily",
+    "time": "02:00"
+  },
+  "operations": [
+    {
+      "type": "copy",
+      "files": [
+        "file1.txt",
+        "file2.txt"
+      ]
+    },
+    {
+      "type": "move",
+      "files": [
+        "file3.txt"
+      ]
+    }
+  ],
+  "logging": {
+    "enabled": true,
+    "log_level": "info"
+  }
+}

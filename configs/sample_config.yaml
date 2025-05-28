@@ -1,0 +1,14 @@
+source: "local_folder"
+target: "azure_data_lake"
+schedule:
+  type: "recurring"
+  interval: "daily"
+  time: "02:00"
+credentials:
+  storage_account: "your_storage_account"
+  client_id: "your_client_id"
+  client_secret: "your_client_secret"
+  tenant_id: "your_tenant_id"
+options:
+  overwrite: true
+  log_level: "info"
