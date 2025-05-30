@@ -128,7 +128,7 @@ function DataSource() {
                 {src.type}
               </td>
               <td style={{ borderBottom: "1px solid #eee", padding: "8px" }}>
-                {src.type === "adls"
+                {src.type === "Azure Data Lake Storage"
                   ? `Account: ${src.config.account_name}, Container: ${src.config.container}`
                   : src.type === "local"
                   ? `Path: ${src.config.path}`
@@ -175,7 +175,7 @@ function DataSource() {
                 <div>
                   <b>Type:</b> {selected.type}
                 </div>
-                {selected.type === "adls" && (
+                {selected.type === "Azure Data Lake Storage" && (
                   <>
                     <div>
                       <b>Account Name:</b> {selected.config.account_name}
@@ -225,7 +225,7 @@ function DataSource() {
                     </span>
                   )}
                 </div>
-                {editForm.type === "adls" && (
+                {editForm.type === "Azure Data Lake Storage" && (
                   <>
                     <div>
                       <label>

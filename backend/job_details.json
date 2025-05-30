@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "Add",
+    "sourceType": "azure",
+    "sourceAzureId": "6",
+    "sourceContainer": "A",
+    "source": "Users\\priya\\[$Toda]\\Python\\copy_pilo",
+    "sourceFileMask": "A.csv",
+    "targetType": "azure",
+    "targetAzureId": "6",
+    "targetContainer": "B",
+    "target": "Users\\priya\\[$Today]\\Python\\copy_pilot",
+    "targetFileMask": "A.csv"
+  },
+  {
+    "id": 2,
+    "name": "Add1",
+    "sourceType": "azure",
+    "sourceAzureId": "6",
+    "sourceContainer": "A",
+    "source": "Users\\priya\\[$Toda]\\Python\\copy_pilo",
+    "sourceFileMask": "*.csv",
+    "targetType": "azure",
+    "targetAzureId": "6",
+    "targetContainer": "B",
+    "target": "Users\\priya\\[$Today]\\Python\\copy_pilot",
+    "targetFileMask": ""
+  },
+  {
+    "id": 3,
+    "name": "Add3",
+    "sourceType": "general",
+    "sourceAzureId": "",
+    "sourceContainer": "",
+    "source": "Users\\priya\\[$Toda]\\Python\\copy_pilo",
+    "sourceFileMask": "A.csv",
+    "targetType": "shared",
+    "targetAzureId": "",
+    "targetContainer": "",
+    "target": "Users\\priya\\[$Today]\\Python\\copy_pilot",
+    "targetFileMask": "A.csv"
+  }
+]

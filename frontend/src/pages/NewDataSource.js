@@ -6,7 +6,7 @@ function NewDataSource() {
   const [selectedType, setSelectedType] = useState("");
   const [form, setForm] = useState({
     name: "",
-    type: "adls",
+    type: "Azure Data Lake Storage",
     account_name: "",
     account_key: "",
     container: "",
@@ -105,8 +105,8 @@ function NewDataSource() {
       {!selectedType ? (
         <div>
           <h2>Select Data Source Type</h2>
-          <button onClick={() => handleTypeSelect("adls")}>
-            Azure Data Lake Storage (ADLS)
+          <button onClick={() => handleTypeSelect("Azure Data Lake Storage")}>
+            Azure Data Lake Storage (Azure Data Lake Storage)
           </button>
         </div>
       ) : (

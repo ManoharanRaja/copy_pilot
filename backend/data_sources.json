@@ -1,16 +1,8 @@
 [
   {
-    "id": 4,
-    "name": "Local Folder",
-    "type": "local",
-    "config": {
-      "path": "C:/data/input"
-    }
-  },
-  {
     "id": 6,
     "name": "MyDesktop1",
-    "type": "adls",
+    "type": "Azure Data Lake Storage",
     "config": {
       "account_name": "Mojo",
       "account_key": "gAAAAABoNnWKhRSdRinqSCaofoy6-JknYn0VVsPscxA9_dcdN4tZHBT9Z0Aqy6ya84-JwkZPiBdDawCZs3MWLtmZ3J67xuRXxg==",
@@ -19,8 +11,8 @@
   },
   {
     "id": 7,
-    "name": "MyADLS",
-    "type": "adls",
+    "name": "MyAzure Data Lake Storage",
+    "type": "Azure Data Lake Storage",
     "config": {
       "account_name": "Mojo",
       "account_key": "gAAAAABoNnWXkT1pjBsZ-yaVVGG-YMLJhAa3RQYdM5oGIyqh-cXHiPxB-AdbYwm0Q7zbk8tlYk3cRmKgX92ckvrcoBzb3k_7KQ==",
@@ -30,10 +22,20 @@
   {
     "id": 8,
     "name": "MyDesktop",
-    "type": "adls",
+    "type": "Azure Data Lake Storage",
     "config": {
       "account_name": "Mojo",
       "account_key": "gAAAAABoNnW2n4mBTnEMd_a96u-uwZodTiHBGtF1QvzE-XXpBiJbPdDRxarU5oDig8eidSbMqKCRwSv32kmCEn2mQFnfNmTzpQ==",
+      "container": "*"
+    }
+  },
+  {
+    "id": 9,
+    "name": "MyDesktop123",
+    "type": "Azure Data Lake Storage",
+    "config": {
+      "account_name": "Mojo",
+      "account_key": "gAAAAABoOOIx9v8CX22gI52-HHRy8T6L7rlTK_e6bNZ_QwdwgxSR5baKGjJ2SFL_dMo2bAUicHy84HQ1sQmGLXDvwsVQwCP6QA==",
       "container": "*"
     }
   }
