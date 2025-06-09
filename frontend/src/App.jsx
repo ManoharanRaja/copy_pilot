@@ -7,6 +7,7 @@ import Jobs from "./pages/Jobs";
 import DataSource from "./pages/DataSource";
 import NewDataSource from "./pages/NewDataSource";
 import NewJob from "./pages/NewJob";
+import EditJob from "./pages/EditJob";
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
         <Switch>
           <Route path="/" exact component={Dashboard} />
           <Route path="/configuration" component={Configuration} />
+          <Route path="/jobs/:id/edit" component={EditJob} />
           <Route path="/jobs/new" component={NewJob} />
           <Route path="/jobs" component={Jobs} />
           <Route path="/datasource/new" component={NewDataSource} />

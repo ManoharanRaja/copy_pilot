@@ -1,59 +1,54 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
-import { validateJob } from "../utils/jobValidation"; // <-- Import here
+import { useParams, useHistory } from "react-router-dom";
+import { validateJob } from "../utils/jobValidation";
 
-function NewJob() {
-  const [form, setForm] = useState({
-    name: "",
-    source: "",
-    target: "",
-    sourceType: "",
-    targetType: "",
-    sourceFileMask: "",
-    targetFileMask: "",
-    sourceAzureId: "",
-    targetAzureId: "",
-    sourceContainer: "",
-    targetContainer: "",
-  });
-  const [azureSources, setAzureSources] = useState([]);
+function EditJob() {
+  const { id } = useParams();
   const history = useHistory();
+  const [form, setForm] = useState(null);
+  const [azureSources, setAzureSources] = useState([]);
   const [errors, setErrors] = useState({});
   const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Fetch Azure Data Lake sources
     axios.get("/datasources?type=azure").then((res) => {
       setAzureSources(res.data || []);
     });
-    // Fetch existing jobs for name uniqueness check
+    // Fetch all jobs for name uniqueness check and to get the job to edit
     axios.get("/jobs").then((res) => {
       setJobs(res.data || []);
+      const job = (res.data || []).find((j) => String(j.id) === String(id));
+      setForm(job);
+      setLoading(false);
     });
-  }, []);
+  }, [id]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    // Clear the error for the field being edited
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: undefined });
-    }
-  };
-  // Helper to get containers for selected Azure Data Lake
   const getContainers = (azureId) => {
     const ds = azureSources.find((d) => d.id === azureId);
     return ds && ds.containers ? ds.containers : [];
+  };
+
+  if (loading || !form) return <div>Loading...</div>;
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: undefined });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validateJob(form);
 
-    // Unique name validation
+    // Unique name validation (exclude current job)
     if (
       jobs.some(
         (job) =>
+          job.id !== form.id &&
           job.name.trim().toLowerCase() === form.name.trim().toLowerCase()
       )
     ) {
@@ -63,10 +58,8 @@ function NewJob() {
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
-    // Send to backend instead of downloading
     try {
-      await axios.post("/jobs", form);
-      // Optionally, redirect or show a success message
+      await axios.put(`/jobs/${id}`, form);
       history.push("/jobs");
     } catch (error) {
       const detail =
@@ -74,13 +67,13 @@ function NewJob() {
         (typeof error.response?.data === "string"
           ? error.response.data
           : error.message);
-      alert("Failed to save job: " + detail);
+      alert("Failed to update job: " + detail);
     }
   };
 
   return (
     <div>
-      <h2>Add New Job</h2>
+      <h2>Edit Job</h2>
       <form onSubmit={handleSubmit}>
         <div style={{ display: "flex", gap: "40px", marginBottom: "20px" }}>
           {/* Source Section */}
@@ -95,7 +88,6 @@ function NewJob() {
             }}
           >
             <h3>Source Details</h3>
-            {/* ...Job Name, Source Type... */}
             <label>
               Job Name
               <input
@@ -165,7 +157,6 @@ function NewJob() {
                 )}
               </>
             )}
-            {/* ...Source Folder, File Mask... */}
             <label>
               Source Folder
               <input
@@ -262,7 +253,6 @@ function NewJob() {
                 )}
               </>
             )}
-            {/* ...Target Folder, File Mask, Schedule... */}
             <label>
               Target Folder
               <input
@@ -271,6 +261,7 @@ function NewJob() {
                 value={form.target}
                 onChange={handleChange}
                 required
+                style={errors.target ? { borderColor: "red" } : {}}
               />
               {errors.target && (
                 <span style={{ color: "red", fontSize: "12px" }}>
@@ -285,6 +276,7 @@ function NewJob() {
                 placeholder="File Mask (e.g. *.csv)"
                 value={form.targetFileMask}
                 onChange={handleChange}
+                style={errors.targetFileMask ? { borderColor: "red" } : {}}
               />
               {errors.targetFileMask && (
                 <span style={{ color: "red", fontSize: "12px" }}>
@@ -294,7 +286,7 @@ function NewJob() {
             </label>
           </div>
         </div>
-        <button type="submit">Save Job</button>
+        <button type="submit">Save</button>
         <button
           type="button"
           onClick={() => history.push("/jobs")}
@@ -307,4 +299,4 @@ function NewJob() {
   );
 }
 
-export default NewJob;
+export default EditJob;

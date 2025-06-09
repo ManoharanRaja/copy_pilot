@@ -61,6 +61,49 @@ function Jobs() {
     setShowForm(true);
   };
 
+  // Helper to render details vertically in a cell
+  const renderSourceDetails = (job) => (
+    <div>
+      <strong>Type:</strong> {job.sourceType}
+      <br />
+      {job.sourceContainer && (
+        <>
+          <strong>Container:</strong> {job.sourceContainer}
+          <br />
+        </>
+      )}
+      <strong>Folder:</strong> {job.source}
+      <br />
+      {job.sourceFileMask && (
+        <>
+          <strong>File Mask:</strong> {job.sourceFileMask}
+          <br />
+        </>
+      )}
+    </div>
+  );
+
+  const renderTargetDetails = (job) => (
+    <div>
+      <strong>Type:</strong> {job.targetType}
+      <br />
+      {job.targetContainer && (
+        <>
+          <strong>Container:</strong> {job.targetContainer}
+          <br />
+        </>
+      )}
+      <strong>Folder:</strong> {job.target}
+      <br />
+      {job.targetFileMask && (
+        <>
+          <strong>File Mask:</strong> {job.targetFileMask}
+          <br />
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div>
       <div
@@ -125,7 +168,7 @@ function Jobs() {
       >
         <thead>
           <tr>
-            <th>Name</th>
+            <th>Job Name</th>
             <th>Source</th>
             <th>Target</th>
             <th>Schedule</th>
@@ -136,11 +179,13 @@ function Jobs() {
           {jobs.map((job) => (
             <tr key={job.id}>
               <td>{job.name}</td>
-              <td>{job.source}</td>
-              <td>{job.target}</td>
+              <td>{renderSourceDetails(job)}</td>
+              <td>{renderTargetDetails(job)}</td>
               <td>{job.schedule || "Manual"}</td>
               <td>
-                <button onClick={() => handleEdit(job)}>Edit</button>
+                <button onClick={() => history.push(`/jobs/${job.id}/edit`)}>
+                  Edit
+                </button>
                 <button
                   onClick={() => handleDelete(job.id)}
                   style={{ marginLeft: "5px" }}
