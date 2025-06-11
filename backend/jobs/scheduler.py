@@ -1,22 +1,53 @@
-class TaskScheduler:
-    def __init__(self):
-        self.tasks = {}
+import os
+import json
+from fastapi import APIRouter, HTTPException
 
-    def schedule_task(self, task_id, task_details, schedule_time):
-        self.tasks[task_id] = {
-            'details': task_details,
-            'schedule_time': schedule_time,
-            'status': 'scheduled'
-        }
+router = APIRouter()
+SCHEDULE_FILE = "backend/data/schedules.json"
 
-    def run_task(self, task_id):
-        if task_id in self.tasks:
-            task = self.tasks[task_id]
-            task['status'] = 'running'
-            # Logic to execute the task goes here
-            task['status'] = 'completed'
-            return task
-        return None
+def load_schedules():
+    if not os.path.exists(SCHEDULE_FILE):
+        return []
+    with open(SCHEDULE_FILE, "r") as f:
+        return json.load(f)
 
-    def get_task_status(self, task_id):
-        return self.tasks.get(task_id, {}).get('status', 'not found')
+def save_schedules(schedules):
+    with open(SCHEDULE_FILE, "w") as f:
+        json.dump(schedules, f, indent=2)
+
+@router.get("/schedules")
+def get_schedules():
+    return load_schedules()
+
+@router.post("/schedules")
+def add_schedule(schedule: dict):
+    schedules = load_schedules()
+    # Assign a unique id
+    schedule["id"] = max([s.get("id", 0) for s in schedules] or [0]) + 1
+    schedules.append(schedule)
+    save_schedules(schedules)
+    return schedule
+
+@router.put("/schedules/{schedule_id}")
+def update_schedule(schedule_id: int, updated: dict):
+    schedules = load_schedules()
+    found = False
+    for idx, sch in enumerate(schedules):
+        if sch.get("id") == schedule_id:
+            updated["id"] = schedule_id  # Ensure ID stays the same
+            schedules[idx] = updated
+            found = True
+            break
+    if not found:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    save_schedules(schedules)
+    return updated
+
+@router.delete("/schedules/{schedule_id}")
+def delete_schedule(schedule_id: int):
+    schedules = load_schedules()
+    new_schedules = [s for s in schedules if s.get("id") != schedule_id]
+    if len(new_schedules) == len(schedules):
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    save_schedules(new_schedules)
+    return {"detail": "Deleted"}

@@ -32,6 +32,7 @@ function JobRunHistory() {
             <th>Timestamp</th>
             <th>Status</th>
             <th>Message</th>
+            <th>Trigger Type</th>
             <th>Details</th>
           </tr>
         </thead>
@@ -48,6 +49,11 @@ function JobRunHistory() {
                 <td>{run.timestamp}</td>
                 <td>{run.status}</td>
                 <td>{run.message}</td>
+                <td>
+                  {run.trigger_type === "scheduled"
+                    ? "Scheduled Run"
+                    : "Manual Trigger"}
+                </td>
                 <td>
                   <button
                     onClick={() => setExpanded(expanded === idx ? null : idx)}

@@ -10,16 +10,20 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from backend.utils.crypto import encrypt,ENCRYPTION_KEY
 from backend.jobs.runner import router as job_router
-
+from backend.jobs.scheduler import router as scheduler_router
+from backend.jobs.scheduler_runner import start_scheduler
 
 
 app = FastAPI()
+
 jobs = []
 job_id_counter = 1
 connections = []
 connection_id_counter = 1
 # Initialize the app with the job router
 app.include_router(job_router)
+app.include_router(scheduler_router)
+start_scheduler()
 
 @app.get("/datasources")
 def list_data_sources():

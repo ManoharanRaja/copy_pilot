@@ -28,6 +28,7 @@ def update_run_status_later(history_file, delay=2):
 @router.post("/jobs/{job_id}/run")
 async def run_job(job_id: int, request: Request):
     data = await request.json() if request.headers.get("content-type") else {}
+    trigger_type = data.get("trigger_type", "manual")
     timestamp = data.get("timestamp") or datetime.utcnow().isoformat()
     history_file = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}.json")
 
@@ -71,7 +72,8 @@ async def run_job(job_id: int, request: Request):
         "message": f"Copied {len(copied_files)} files.",
         "file_mask_used": file_mask,
         "source_files": source_files,
-        "copied_files": copied_files
+        "copied_files": copied_files,
+        "trigger_type": trigger_type
     }
 
     # --- Save run history ---
