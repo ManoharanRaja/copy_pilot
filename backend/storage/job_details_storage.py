@@ -2,7 +2,7 @@ import os
 import json
 from backend.models.copy_job import CopyJob
 
-JOBS_FILE = r"C:\Users\priya\Desktop\Python\copy_pilot\backend\job_details.json"
+JOBS_FILE = "backend/data/job_details.json"
 
 def load_jobs():
     if os.path.exists(JOBS_FILE):

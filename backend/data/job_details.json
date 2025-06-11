@@ -5,13 +5,13 @@
     "sourceType": "local",
     "sourceAzureId": "",
     "sourceContainer": "",
-    "source": "C:\\Users\\priya\\SourceFolder",
-    "sourceFileMask": "*.csv",
+    "source": "C:\\Users\\priya\\Downloads\\SourceFolder",
+    "sourceFileMask": "New Text Document - Copy.txt",
     "targetType": "local",
     "targetAzureId": "",
     "targetContainer": "",
-    "target": "C:\\Users\\priya\\TargetFolder",
-    "targetFileMask": "*.csv"
+    "target": "C:\\Users\\priya\\Downloads\\TargetFolder",
+    "targetFileMask": ""
   },
   {
     "id": 2,

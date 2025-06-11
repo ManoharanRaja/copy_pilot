@@ -9,12 +9,17 @@ from backend.storage.job_details_storage import load_jobs, save_jobs
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from backend.utils.crypto import encrypt,ENCRYPTION_KEY
+from backend.jobs.runner import router as job_router
+
+
 
 app = FastAPI()
 jobs = []
 job_id_counter = 1
 connections = []
 connection_id_counter = 1
+# Initialize the app with the job router
+app.include_router(job_router)
 
 @app.get("/datasources")
 def list_data_sources():
@@ -119,17 +124,18 @@ def delete_job(job_id: int):
 
 @app.post("/jobs/{job_id}/run")
 def run_job(job_id: int):
-    job = next((j for j in jobs if j.id == job_id), None)
+    jobs = load_jobs()  # <-- Always load the latest jobs
+    job = next((j for j in jobs if j.get("id") == job_id), None)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     # Simple copy logic: copy all files from source to target
-    if not os.path.exists(job.source):
+    if not os.path.exists(job["source"]):
         raise HTTPException(status_code=400, detail="Source folder does not exist")
-    if not os.path.exists(job.target):
-        os.makedirs(job.target)
-    for filename in os.listdir(job.source):
-        src_file = os.path.join(job.source, filename)
-        dst_file = os.path.join(job.target, filename)
+    if not os.path.exists(job["target"]):
+        os.makedirs(job["target"])
+    for filename in os.listdir(job["source"]):
+        src_file = os.path.join(job["source"], filename)
+        dst_file = os.path.join(job["target"], filename)
         if os.path.isfile(src_file):
             shutil.copy2(src_file, dst_file)
     return {"detail": f"Job {job_id} completed"}

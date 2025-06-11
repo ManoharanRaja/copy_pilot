@@ -4,14 +4,14 @@ import { useHistory } from "react-router-dom";
 
 function Jobs() {
   const [jobs, setJobs] = useState([]);
-  const [form, setForm] = useState({
+  /* const [form, setForm] = useState({
     name: "",
     source: "",
     target: "",
     schedule: "",
   });
   const [editingId, setEditingId] = useState(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(false); */
   const history = useHistory();
 
   useEffect(() => {
@@ -23,7 +23,7 @@ function Jobs() {
     setJobs(res.data);
   };
 
-  const handleChange = (e) =>
+  /* const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
@@ -43,7 +43,7 @@ function Jobs() {
     setForm(job);
     setEditingId(job.id);
     setShowForm(true);
-  };
+  }; */
 
   const handleDelete = async (id) => {
     await axios.delete(`/jobs/${id}`);
@@ -52,14 +52,14 @@ function Jobs() {
 
   const handleRun = async (id) => {
     await axios.post(`/jobs/${id}/run`);
-    alert("Job started!");
+    history.push(`/jobs/${id}/history`);
   };
 
-  const handleAddNew = () => {
+  /* const handleAddNew = () => {
     setForm({ name: "", source: "", target: "", schedule: "" });
     setEditingId(null);
     setShowForm(true);
-  };
+  }; */
 
   // Helper to render details vertically in a cell
   const renderSourceDetails = (job) => (
@@ -121,7 +121,7 @@ function Jobs() {
           Add New Job
         </button>
       </div>
-      {showForm && (
+      {/* {showForm && (
         <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
           <input
             name="name"
@@ -159,7 +159,7 @@ function Jobs() {
             Cancel
           </button>
         </form>
-      )}
+      )} */}
       <table
         border="1"
         cellPadding="8"
@@ -197,6 +197,12 @@ function Jobs() {
                   style={{ marginLeft: "5px" }}
                 >
                   Run
+                </button>
+                <button
+                  onClick={() => history.push(`/jobs/${job.id}/history`)}
+                  style={{ marginLeft: "5px" }}
+                >
+                  View run history
                 </button>
               </td>
             </tr>
