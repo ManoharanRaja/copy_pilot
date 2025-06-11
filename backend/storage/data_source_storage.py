@@ -1,7 +1,7 @@
 import os
 import json
 
-DATA_SOURCE_FILE = r"C:\Users\priya\Desktop\Python\copy_pilot\backend\data_sources.json"
+DATA_SOURCE_FILE = "backend/data/data_sources.json"
 def load_data_sources():
     if not os.path.exists(DATA_SOURCE_FILE):
         return []

@@ -15,7 +15,7 @@ STORAGE_CONFIG = {
         "username": "your_username",
         "password": "your_password"
     },
-    "adls": {
+    "Azure Data Lake Storage": {
         "account_name": "your_account_name",
         "account_key": "your_account_key",
         "container_name": "your_container_name"

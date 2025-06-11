@@ -5,15 +5,21 @@ from fastapi import FastAPI, HTTPException
 from backend.models.copy_job import CopyJob
 from backend.models.data_source import DataSource
 from backend.storage.data_source_storage import load_data_sources, save_data_sources
+from backend.storage.job_details_storage import load_jobs, save_jobs
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from backend.utils.crypto import encrypt,ENCRYPTION_KEY
+from backend.jobs.runner import router as job_router
+
+
 
 app = FastAPI()
 jobs = []
 job_id_counter = 1
 connections = []
 connection_id_counter = 1
+# Initialize the app with the job router
+app.include_router(job_router)
 
 @app.get("/datasources")
 def list_data_sources():
@@ -26,7 +32,7 @@ def add_data_source(ds: DataSource):
     if any(d["name"].lower() == ds.name.lower() for d in data_sources):
         raise HTTPException(status_code=400, detail="Data source name already exists.")
     # Encrypt account_key if present
-    if ds.type == "adls" and "account_key" in ds.config:
+    if ds.type == "Azure Data Lake Storage" and "account_key" in ds.config:
         ds.config["account_key"] = encrypt(ds.config["account_key"], ENCRYPTION_KEY)
     # Dynamically assign the next id
     ds.id = max([d.get("id", 0) for d in data_sources], default=0) + 1
@@ -53,7 +59,7 @@ def update_data_source(ds_id: int, ds: DataSource):
             if any(d["name"].lower() == ds.name.lower() and d["id"] != ds_id for d in data_sources):
                 raise HTTPException(status_code=400, detail="Data source name already exists.")
             # Encrypt account_key if present and changed
-            if ds.type == "adls" and "account_key" in ds.config:
+            if ds.type == "Azure Data Lake Storage" and "account_key" in ds.config:
                 from backend.utils.crypto import encrypt, ENCRYPTION_KEY
                 ds.config["account_key"] = encrypt(ds.config["account_key"], ENCRYPTION_KEY)
             ds.id = ds_id  # Ensure ID stays the same
@@ -76,50 +82,60 @@ async def test_data_source(request: Request):
         and config.get("account_key")
         and config.get("container")
     ):
-        # TODO: Replace with real ADLS connection test
+        # TODO: Replace with real Azure Data Lake Storage connection test
         return JSONResponse({"success": True})
     return JSONResponse({"success": False})
 
 @app.get("/jobs")
 def list_jobs():
-    return jobs
+    return load_jobs()
 
 @app.post("/jobs")
 def add_job(job: CopyJob):
-    global job_id_counter
-    job.id = job_id_counter
-    job_id_counter += 1
-    jobs.append(job)
+    jobs = load_jobs()
+    # Unique name check
+    if any(j["name"].strip().lower() == job.name.strip().lower() for j in jobs):
+        raise HTTPException(status_code=400, detail="A job with this name already exists.")
+    # Assign an id if not present
+    job.id = max([j.get("id", 0) for j in jobs] or [0]) + 1
+    jobs.append(job.dict())
+    save_jobs(jobs)
     return job
 
 @app.put("/jobs/{job_id}")
 def edit_job(job_id: int, job: CopyJob):
+    jobs = load_jobs()
     for idx, j in enumerate(jobs):
-        if j.id == job_id:
-            jobs[idx] = job
-            jobs[idx].id = job_id
-            return jobs[idx]
+        if j.get("id") == job_id:
+            job.id = job_id  # Ensure ID stays the same
+            jobs[idx] = job.dict()
+            save_jobs(jobs)
+            return job
     raise HTTPException(status_code=404, detail="Job not found")
 
 @app.delete("/jobs/{job_id}")
 def delete_job(job_id: int):
-    global jobs
-    jobs = [j for j in jobs if j.id != job_id]
+    jobs = load_jobs()
+    new_jobs = [j for j in jobs if j.get("id") != job_id]
+    if len(new_jobs) == len(jobs):
+        raise HTTPException(status_code=404, detail="Job not found")
+    save_jobs(new_jobs)
     return {"detail": "Deleted"}
 
 @app.post("/jobs/{job_id}/run")
 def run_job(job_id: int):
-    job = next((j for j in jobs if j.id == job_id), None)
+    jobs = load_jobs()  # <-- Always load the latest jobs
+    job = next((j for j in jobs if j.get("id") == job_id), None)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     # Simple copy logic: copy all files from source to target
-    if not os.path.exists(job.source):
+    if not os.path.exists(job["source"]):
         raise HTTPException(status_code=400, detail="Source folder does not exist")
-    if not os.path.exists(job.target):
-        os.makedirs(job.target)
-    for filename in os.listdir(job.source):
-        src_file = os.path.join(job.source, filename)
-        dst_file = os.path.join(job.target, filename)
+    if not os.path.exists(job["target"]):
+        os.makedirs(job["target"])
+    for filename in os.listdir(job["source"]):
+        src_file = os.path.join(job["source"], filename)
+        dst_file = os.path.join(job["target"], filename)
         if os.path.isfile(src_file):
             shutil.copy2(src_file, dst_file)
     return {"detail": f"Job {job_id} completed"}
