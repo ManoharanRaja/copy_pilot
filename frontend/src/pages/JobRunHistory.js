@@ -9,7 +9,7 @@ function JobRunHistory() {
   const [expanded, setExpanded] = useState(null);
 
   const fetchHistory = async () => {
-    const res = await axios.get(`/jobs/${id}/history`);
+    const res = await axios.get(`/jobs/${id}/run-history`);
     setRunHistory(res.data || []);
   };
 
@@ -50,9 +50,17 @@ function JobRunHistory() {
                 <td>{run.status}</td>
                 <td>{run.message}</td>
                 <td>
-                  {run.trigger_type === "scheduled"
-                    ? "Scheduled Run"
-                    : "Manual Trigger"}
+                  {run.trigger_type === "scheduled" ? (
+                    run.scheduler_id ? (
+                      <>
+                        Scheduled Run - Scheduler ID: <b>{run.scheduler_id}</b>
+                      </>
+                    ) : (
+                      "Scheduled Run"
+                    )
+                  ) : (
+                    "Manual Trigger"
+                  )}
                 </td>
                 <td>
                   <button

@@ -23,7 +23,7 @@ const App = () => {
           <Route path="/scheduler/edit/:id" component={EditScheduler} />
           <Route path="/scheduler" component={Scheduler} />
           <Route path="/configuration" component={Configuration} />
-          <Route path="/jobs/:id/history" component={JobRunHistory} />
+          <Route path="/jobs/:id/run-history" component={JobRunHistory} />
           <Route path="/jobs/:id/edit" component={EditJob} />
           <Route path="/jobs/new" component={NewJob} />
           <Route path="/jobs" component={Jobs} />

@@ -22,7 +22,7 @@ function Jobs() {
 
   const handleRun = async (id) => {
     await axios.post(`/jobs/${id}/run`, { trigger_type: "manual" });
-    history.push(`/jobs/${id}/history`);
+    history.push(`/jobs/${id}/run-history`);
   };
 
   // Helper to render details vertically in a cell
@@ -124,7 +124,7 @@ function Jobs() {
                   Run
                 </button>
                 <button
-                  onClick={() => history.push(`/jobs/${job.id}/history`)}
+                  onClick={() => history.push(`/jobs/${job.id}/run-history`)}
                   style={{ marginLeft: "5px" }}
                 >
                   View run history
