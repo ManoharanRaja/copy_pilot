@@ -28,6 +28,8 @@ def update_run_status_later(history_file, delay=2):
 @router.post("/jobs/{job_id}/run")
 async def run_job(job_id: int, request: Request):
     data = await request.json() if request.headers.get("content-type") else {}
+    trigger_type = data.get("trigger_type", "manual")
+    scheduler_id = data.get("scheduler_id")  # <-- Get scheduler_id if present
     timestamp = data.get("timestamp") or datetime.utcnow().isoformat()
     history_file = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}.json")
 
@@ -71,8 +73,11 @@ async def run_job(job_id: int, request: Request):
         "message": f"Copied {len(copied_files)} files.",
         "file_mask_used": file_mask,
         "source_files": source_files,
-        "copied_files": copied_files
+        "copied_files": copied_files,
+        "trigger_type": trigger_type
     }
+    if scheduler_id is not None:
+        run_record["scheduler_id"] = scheduler_id
 
     # --- Save run history ---
     if os.path.exists(history_file):
@@ -86,7 +91,7 @@ async def run_job(job_id: int, request: Request):
 
     return JSONResponse({"success": True})
 
-@router.get("/jobs/{job_id}/history")
+@router.get("/jobs/{job_id}/run-history")
 def get_run_history(job_id: int):
     history_file = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}.json")
     if os.path.exists(history_file):

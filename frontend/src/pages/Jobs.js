@@ -4,14 +4,6 @@ import { useHistory } from "react-router-dom";
 
 function Jobs() {
   const [jobs, setJobs] = useState([]);
-  /* const [form, setForm] = useState({
-    name: "",
-    source: "",
-    target: "",
-    schedule: "",
-  });
-  const [editingId, setEditingId] = useState(null);
-  const [showForm, setShowForm] = useState(false); */
   const history = useHistory();
 
   useEffect(() => {
@@ -23,43 +15,15 @@ function Jobs() {
     setJobs(res.data);
   };
 
-  /* const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (editingId) {
-      await axios.put(`/jobs/${editingId}`, form);
-      setEditingId(null);
-    } else {
-      await axios.post("/jobs", form);
-    }
-    setForm({ name: "", source: "", target: "", schedule: "" });
-    setShowForm(false);
-    fetchJobs();
-  };
-
-  const handleEdit = (job) => {
-    setForm(job);
-    setEditingId(job.id);
-    setShowForm(true);
-  }; */
-
   const handleDelete = async (id) => {
     await axios.delete(`/jobs/${id}`);
     fetchJobs();
   };
 
   const handleRun = async (id) => {
-    await axios.post(`/jobs/${id}/run`);
-    history.push(`/jobs/${id}/history`);
+    await axios.post(`/jobs/${id}/run`, { trigger_type: "manual" });
+    history.push(`/jobs/${id}/run-history`);
   };
-
-  /* const handleAddNew = () => {
-    setForm({ name: "", source: "", target: "", schedule: "" });
-    setEditingId(null);
-    setShowForm(true);
-  }; */
 
   // Helper to render details vertically in a cell
   const renderSourceDetails = (job) => (
@@ -121,45 +85,6 @@ function Jobs() {
           Add New Job
         </button>
       </div>
-      {/* {showForm && (
-        <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
-          <input
-            name="name"
-            placeholder="Job Name"
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
-          <input
-            name="source"
-            placeholder="Source Folder"
-            value={form.source}
-            onChange={handleChange}
-            required
-          />
-          <input
-            name="target"
-            placeholder="Target Folder"
-            value={form.target}
-            onChange={handleChange}
-            required
-          />
-          <input
-            name="schedule"
-            placeholder="Schedule (optional)"
-            value={form.schedule}
-            onChange={handleChange}
-          />
-          <button type="submit">{editingId ? "Update" : "Add"} Job</button>
-          <button
-            type="button"
-            onClick={() => setShowForm(false)}
-            style={{ marginLeft: "10px" }}
-          >
-            Cancel
-          </button>
-        </form>
-      )} */}
       <table
         border="1"
         cellPadding="8"
@@ -199,7 +124,7 @@ function Jobs() {
                   Run
                 </button>
                 <button
-                  onClick={() => history.push(`/jobs/${job.id}/history`)}
+                  onClick={() => history.push(`/jobs/${job.id}/run-history`)}
                   style={{ marginLeft: "5px" }}
                 >
                   View run history
