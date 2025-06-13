@@ -7,19 +7,29 @@ function JobRunHistory() {
   const history = useHistory();
   const [runHistory, setRunHistory] = useState([]);
   const [expanded, setExpanded] = useState(null);
+  const [jobName, setJobName] = useState("");
 
   const fetchHistory = async () => {
     const res = await axios.get(`/jobs/${id}/run-history`);
     setRunHistory(res.data || []);
   };
 
+  const fetchJobName = async () => {
+    // Fetch all jobs and find the one with the matching ID
+    const res = await axios.get("/jobs");
+    const job = res.data.find((j) => String(j.id) === String(id));
+    setJobName(job ? job.name : id);
+  };
+
   useEffect(() => {
     fetchHistory();
+    fetchJobName();
+    // eslint-disable-next-line
   }, [id]);
 
   return (
     <div>
-      <h2>Run History for Job #{id}</h2>
+      <h2>Run History for Job: {jobName}</h2>
       <button onClick={() => history.push("/jobs")}>Back to Jobs</button>
       <table
         border="1"
@@ -39,7 +49,7 @@ function JobRunHistory() {
         <tbody>
           {runHistory.length === 0 && (
             <tr>
-              <td colSpan={5}>No run history yet.</td>
+              <td colSpan={6}>No run history yet.</td>
             </tr>
           )}
           {[...runHistory].reverse().map((run, idx) => (
@@ -72,7 +82,7 @@ function JobRunHistory() {
               </tr>
               {expanded === idx && (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={6}>
                     <div>
                       <b>File Mask Used:</b> {run.file_mask_used || "-"}
                       <br />

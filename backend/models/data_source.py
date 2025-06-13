@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
+import uuid
 
 class DataSource(BaseModel):
-    id: Optional[int]= None   # <-- Make sure this is Optional and has a default
+    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     type: str
     config: Dict[str, Any]

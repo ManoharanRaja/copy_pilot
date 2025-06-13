@@ -1,102 +1,84 @@
 import os
 import json
-import threading
-import time
-import shutil
-import fnmatch
+import traceback
+import uuid
 
+from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from datetime import datetime
+from backend.app.services.copy_manager import dispatch_copy
+from backend.storage.run_history_storage import write_run_status, update_run_status
 
 router = APIRouter()
 RUN_HISTORY_DIR = "backend/data/run_history"
 os.makedirs(RUN_HISTORY_DIR, exist_ok=True)
 
-def update_run_status_later(history_file, delay=2):
-    time.sleep(delay)
-    if os.path.exists(history_file):
-        with open(history_file, "r") as f:
-            history = json.load(f)
-        if history and history[-1]["status"] == "Started":
-            history[-1]["status"] = "Success"
-            history[-1]["message"] = "Copy completed"
-            with open(history_file, "w") as f:
-                json.dump(history, f, indent=2)
-                
-                
 @router.post("/jobs/{job_id}/run")
-async def run_job(job_id: int, request: Request):
-    data = await request.json() if request.headers.get("content-type") else {}
-    trigger_type = data.get("trigger_type", "manual")
-    scheduler_id = data.get("scheduler_id")  # <-- Get scheduler_id if present
-    timestamp = data.get("timestamp") or datetime.utcnow().isoformat()
-    history_file = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}.json")
+async def run_job(job_id: str, request: Request):
+    run_id = str(uuid.uuid4())
+    try:
+        data = await request.json() if request.headers.get("content-type") else {}
+        trigger_type = data.get("trigger_type", "manual")
+        scheduler_id = data.get("scheduler_id")
+        from backend.storage.job_details_storage import load_jobs
+        jobs = load_jobs()
+        job = next((j for j in jobs if str(j.get("id")) == str(job_id)), None)
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
 
-    from backend.storage.job_details_storage import load_jobs
-    jobs = load_jobs()
-    job = next((j for j in jobs if j.get("id") == job_id), None)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+        # 1. Immediately write a "Started" run record with run_id
+        write_run_status(
+            job_id,
+            run_id,
+            status="Started",
+            message="Job started and is in progress.",
+            trigger_type=trigger_type,
+            scheduler_id=scheduler_id
+        )
 
-    source = job["source"]
-    target = job["target"]
-    file_mask = job.get("sourceFileMask", "*")
-
-    # --- List files in source and target ---
-    source_files = []
-    target_files = []
-    if os.path.exists(source):
-        all_files = [f for f in os.listdir(source) if os.path.isfile(os.path.join(source, f))]
-        # Filter files by mask and store full path
-        source_files = [os.path.join(source, f) for f in fnmatch.filter(all_files, file_mask)]
-    if os.path.exists(target):
-        target_files = [os.path.join(target, f) for f in os.listdir(target) if os.path.isfile(os.path.join(target, f))]
-
-    copied_files = []
-
-    # --- Copy files matching the mask ---
-    if not os.path.exists(target):
-        os.makedirs(target)
-    for src_file in source_files:
-        filename = os.path.basename(src_file)
-        dst_file = os.path.join(target, filename)
+        # 2. Perform the copy logic in a thread pool
         try:
-            shutil.copy2(src_file, dst_file)
-            copied_files.append(dst_file)
-        except Exception as e:
-            pass  # Optionally log errors
+            copied_files, source_files = await run_in_threadpool(dispatch_copy, job)
+            status = "Success"
+            message = f"Copied {len(copied_files)} files."
+        except NotImplementedError as nie:
+            copied_files = []
+            source_files = []
+            status = "Failed"
+            message = f"Copy logic not implemented: {nie}"
+        except Exception as copy_exc:
+            copied_files = []
+            source_files = []
+            status = "Failed"
+            message = f"Copy failed: {repr(copy_exc)}\nTraceback:\n{traceback.format_exc()}"
 
-    run_record = {
-        "timestamp": timestamp,
-        "status": "Success",
-        "message": f"Copied {len(copied_files)} files.",
-        "file_mask_used": file_mask,
-        "source_files": source_files,
-        "copied_files": copied_files,
-        "trigger_type": trigger_type
-    }
-    if scheduler_id is not None:
-        run_record["scheduler_id"] = scheduler_id
+        # 3. Update the same run record with the final status and details
+        update_run_status(
+            job_id,
+            run_id,
+            status,
+            message,
+            job.get("sourceFileMask", "*"),
+            source_files,
+            copied_files,
+            trigger_type=trigger_type,
+            scheduler_id=scheduler_id
+        )
 
-    # --- Save run history ---
-    if os.path.exists(history_file):
-        with open(history_file, "r") as f:
-            history = json.load(f)
-    else:
-        history = []
-    history.append(run_record)
-    with open(history_file, "w") as f:
-        json.dump(history, f, indent=2)
-
-    return JSONResponse({"success": True})
+        return JSONResponse({"success": status == "Success", "status": status, "message": message, "run_id": run_id})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
 
 @router.get("/jobs/{job_id}/run-history")
-def get_run_history(job_id: int):
+def get_run_history(job_id: str):
     history_file = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}.json")
-    if os.path.exists(history_file):
-        with open(history_file, "r") as f:
-            history = json.load(f)
-    else:
-        history = []
-    return JSONResponse(history)
+    try:
+        if os.path.exists(history_file):
+            with open(history_file, "r") as f:
+                history = json.load(f)
+        else:
+            history = []
+        return JSONResponse(history)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to read run history.")

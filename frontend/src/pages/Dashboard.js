@@ -25,7 +25,7 @@ function Dashboard() {
         <Link to="/datasource">Data Source</Link>
       </nav>
       <nav>
-        <Link to="/jobs">Copy Job</Link>
+        <Link to="/jobs">Copy Jobs</Link>
       </nav>
       <nav>
         <Link to="/scheduler">Scheduler</Link>
