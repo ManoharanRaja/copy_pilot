@@ -13,7 +13,8 @@ from backend.jobs.runner import router as job_router
 from backend.jobs.scheduler import router as scheduler_router
 from backend.jobs.scheduler_runner import start_scheduler
 from backend.jobs.runner import router as job_router
-
+from fastapi.concurrency import run_in_threadpool
+from backend.utils.azure_utils import test_adls_connection
 
 app = FastAPI()
 
@@ -80,16 +81,22 @@ def update_data_source(ds_id: str, ds: DataSource):
 async def test_data_source(request: Request):
     data = await request.json()
     config = data.get("config", {})
-    # Here you would use Azure SDK to test the connection.
-    # For now, we'll mock success if all fields are non-empty.
-    if (
-        config.get("account_name")
-        and config.get("account_key")
-        and config.get("container")
-    ):
-        # TODO: Replace with real Azure Data Lake Storage connection test
-        return JSONResponse({"success": True})
-    return JSONResponse({"success": False})
+    ds_type = data.get("type", "")
+
+    if ds_type == "Azure Data Lake Storage":
+        def do_test():
+            account_name = config.get("account_name")
+            account_key = config.get("account_key")
+            container = config.get("container")
+            if not (account_name and account_key):
+                return {"success": False, "message": "Missing required fields."}
+            success, message = test_adls_connection(account_name, account_key, container)
+            return {"success": success, "message": message}
+
+        result = await run_in_threadpool(do_test)
+        return JSONResponse(result)
+    else:
+        return JSONResponse({"success": False, "message": "Unsupported data source type."})
 
 @app.get("/jobs")
 def list_jobs():
