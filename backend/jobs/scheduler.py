@@ -1,6 +1,7 @@
 import os
 import json
 from fastapi import APIRouter, HTTPException
+import uuid
 
 router = APIRouter()
 SCHEDULE_FILE = "backend/data/schedules.json"
@@ -22,19 +23,55 @@ def get_schedules():
 @router.post("/schedules")
 def add_schedule(schedule: dict):
     schedules = load_schedules()
-    # Assign a unique id
-    schedule["id"] = max([s.get("id", 0) for s in schedules] or [0]) + 1
+    if any(s.get("name", "").strip().lower() == schedule.get("name", "").strip().lower() for s in schedules):
+        raise HTTPException(status_code=400, detail="A scheduler with this name already exists.")
+    schedule["id"] = str(uuid.uuid4())
+    schedule["paused"] = False  # <-- Add this line
     schedules.append(schedule)
     save_schedules(schedules)
     return schedule
 
+@router.post("/schedules/{schedule_id}/pause")
+def pause_schedule(schedule_id: str):
+    schedules = load_schedules()
+    found = False
+    for sch in schedules:
+        if sch.get("id") == schedule_id:
+            sch["paused"] = True
+            found = True
+            break
+    if not found:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    save_schedules(schedules)
+    return {"detail": "Paused"}
+
+@router.post("/schedules/{schedule_id}/resume")
+def resume_schedule(schedule_id: str):
+    schedules = load_schedules()
+    found = False
+    for sch in schedules:
+        if sch.get("id") == schedule_id:
+            sch["paused"] = False
+            found = True
+            break
+    if not found:
+        raise HTTPException(status_code=404, detail="Schedule not found")
+    save_schedules(schedules)
+    return {"detail": "Resumed"}
+
 @router.put("/schedules/{schedule_id}")
-def update_schedule(schedule_id: int, updated: dict):
+def update_schedule(schedule_id: str, updated: dict):
     schedules = load_schedules()
     found = False
     for idx, sch in enumerate(schedules):
         if sch.get("id") == schedule_id:
-            updated["id"] = schedule_id  # Ensure ID stays the same
+            # Unique name check (case-insensitive, except for itself)
+            if any(
+                s.get("name", "").strip().lower() == updated.get("name", "").strip().lower() and s.get("id") != schedule_id
+                for s in schedules
+            ):
+                raise HTTPException(status_code=400, detail="A scheduler with this name already exists.")
+            updated["id"] = schedule_id
             schedules[idx] = updated
             found = True
             break
@@ -44,7 +81,7 @@ def update_schedule(schedule_id: int, updated: dict):
     return updated
 
 @router.delete("/schedules/{schedule_id}")
-def delete_schedule(schedule_id: int):
+def delete_schedule(schedule_id: str):
     schedules = load_schedules()
     new_schedules = [s for s in schedules if s.get("id") != schedule_id]
     if len(new_schedules) == len(schedules):

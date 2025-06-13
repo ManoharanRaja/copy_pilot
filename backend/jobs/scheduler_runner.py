@@ -140,6 +140,10 @@ def check_and_run_jobs():
         schedules = load_schedules()
         now_utc = datetime.utcnow()
         for sch in schedules:
+            # --- Ignore paused/disabled schedules ---
+            if sch.get("paused"):
+                continue
+            
             tz = pytz.timezone(sch.get("timezone", "UTC"))
             now = now_utc.replace(tzinfo=pytz.utc).astimezone(tz)
             time_str = now.strftime("%H:%M")
