@@ -59,6 +59,7 @@ const TIMEZONES = [
 function NewScheduler() {
   const [jobs, setJobs] = useState([]);
   const [form, setForm] = useState({
+    name: "",
     jobId: "",
     weekdays: [],
     time: "09:00",
@@ -91,83 +92,114 @@ function NewScheduler() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!form.name) {
+      setError("Please enter a scheduler name.");
+      return;
+    }
     if (!form.jobId || !form.time || !form.timezone) {
       setError("Please select a job, time, and timezone.");
       return;
     }
-    if (isCustom) {
-      if (
-        !customType ||
-        !customX ||
-        ([
-          "business_day_quarter",
-          "day_quarter",
-          "business_day_halfyear",
-          "day_halfyear",
-          "business_day_annually",
-          "day_annually",
-        ].includes(customType) &&
-          !customY)
-      ) {
-        setError("Please fill all custom scheduler fields.");
-        return;
-      }
-      const x = parseInt(customX, 10);
-      const y = customY ? parseInt(customY, 10) : null;
-      const maxX = getMaxX(customType);
+    try {
+      if (isCustom) {
+        if (
+          !customType ||
+          !customX ||
+          ([
+            "business_day_quarter",
+            "day_quarter",
+            "business_day_halfyear",
+            "day_halfyear",
+            "business_day_annually",
+            "day_annually",
+          ].includes(customType) &&
+            !customY)
+        ) {
+          setError("Please fill all custom scheduler fields.");
+          return;
+        }
+        const x = parseInt(customX, 10);
+        const y = customY ? parseInt(customY, 10) : null;
+        const maxX = getMaxX(customType);
 
-      if (isNaN(x) || x < 1 || x > maxX) {
-        setError(`x must be between 1 and ${maxX} for the selected type.`);
+        if (isNaN(x) || x < 1 || x > maxX) {
+          setError(`x must be between 1 and ${maxX} for the selected type.`);
+          return;
+        }
+        // y validation for types that require y
+        if (
+          ["business_day_quarter", "day_quarter"].includes(customType) &&
+          (isNaN(y) || y < 1 || y > 4)
+        ) {
+          setError("Quarter (y) must be between 1 and 4.");
+          return;
+        }
+        if (
+          ["business_day_halfyear", "day_halfyear"].includes(customType) &&
+          (isNaN(y) || y < 1 || y > 2)
+        ) {
+          setError("Half yearly (y) must be 1 or 2.");
+          return;
+        }
+        if (
+          ["business_day_annually", "day_annually"].includes(customType) &&
+          (isNaN(y) || y !== 1)
+        ) {
+          setError("Annually (y) must be 1.");
+          return;
+        }
+        // Save custom scheduler
+        await axios.post("/schedules", {
+          ...form,
+          weekdays: [],
+          customScheduler: {
+            type: customType,
+            x,
+            y: y || null,
+          },
+        });
+        history.push("/scheduler");
         return;
       }
-      // y validation for types that require y
-      if (
-        ["business_day_quarter", "day_quarter"].includes(customType) &&
-        (isNaN(y) || y < 1 || y > 4)
-      ) {
-        setError("Quarter (y) must be between 1 and 4.");
+      if (form.weekdays.length === 0) {
+        setError("Please select at least one weekday.");
         return;
       }
-      if (
-        ["business_day_halfyear", "day_halfyear"].includes(customType) &&
-        (isNaN(y) || y < 1 || y > 2)
-      ) {
-        setError("Half yearly (y) must be 1 or 2.");
-        return;
-      }
-      if (
-        ["business_day_annually", "day_annually"].includes(customType) &&
-        (isNaN(y) || y !== 1)
-      ) {
-        setError("Annually (y) must be 1.");
-        return;
-      }
-      // Save custom scheduler
-      await axios.post("/schedules", {
-        ...form,
-        weekdays: [],
-        customScheduler: {
-          type: customType,
-          x,
-          y: y || null,
-        },
-      });
+      // Save normal scheduler
+      await axios.post("/schedules", form);
       history.push("/scheduler");
-      return;
+    } catch (err) {
+      if (
+        err.response &&
+        err.response.status === 400 &&
+        err.response.data.detail
+      ) {
+        setError(err.response.data.detail);
+      } else {
+        setError("An unexpected error occurred.");
+      }
     }
-    if (form.weekdays.length === 0) {
-      setError("Please select at least one weekday.");
-      return;
-    }
-    // Save normal scheduler
-    await axios.post("/schedules", form);
-    history.push("/scheduler");
   };
 
   return (
     <div>
       <h2>Add New Scheduler</h2>
       <form onSubmit={handleSubmit} style={{ maxWidth: 400 }}>
+        <label>
+          Scheduler Name
+          <input
+            type="text"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            style={{ display: "block", marginBottom: 4, width: "100%" }}
+            maxLength={100}
+          />
+          {error && error.toLowerCase().includes("name") && (
+            <div style={{ color: "red", marginBottom: 12 }}>{error}</div>
+          )}
+        </label>
         <label>
           Job
           <select
@@ -329,7 +361,9 @@ function NewScheduler() {
             ))}
           </select>
         </label>
-        {error && <div style={{ color: "red", marginBottom: 8 }}>{error}</div>}
+        {error && !error.toLowerCase().includes("name") && (
+          <div style={{ color: "red", marginBottom: 8 }}>{error}</div>
+        )}
         <button type="submit">Save Scheduler</button>
         <button
           type="button"
