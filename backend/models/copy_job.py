@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
+import uuid
 
 class CopyJob(BaseModel):
-    id: Optional[int] = None
+    id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     sourceType: str
     sourceAzureId: Optional[str] = None

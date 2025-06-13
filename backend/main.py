@@ -12,6 +12,7 @@ from backend.utils.crypto import encrypt,ENCRYPTION_KEY
 from backend.jobs.runner import router as job_router
 from backend.jobs.scheduler import router as scheduler_router
 from backend.jobs.scheduler_runner import start_scheduler
+from backend.jobs.runner import router as job_router
 
 
 app = FastAPI()
@@ -23,6 +24,7 @@ connection_id_counter = 1
 # Initialize the app with the job router
 app.include_router(job_router)
 app.include_router(scheduler_router)
+app.include_router(job_router)
 start_scheduler()
 
 @app.get("/datasources")
@@ -38,29 +40,28 @@ def add_data_source(ds: DataSource):
     # Encrypt account_key if present
     if ds.type == "Azure Data Lake Storage" and "account_key" in ds.config:
         ds.config["account_key"] = encrypt(ds.config["account_key"], ENCRYPTION_KEY)
-    # Dynamically assign the next id
-    ds.id = max([d.get("id", 0) for d in data_sources], default=0) + 1
+    # Dynamically assign the id
     data_sources.append(ds.dict())
     save_data_sources(data_sources)
     return ds
 
 @app.delete("/datasources/{ds_id}")
-def delete_data_source(ds_id: int = Path(..., description="The ID of the data source to delete")):
+def delete_data_source(ds_id: str = Path(..., description="The ID of the data source to delete")):
     data_sources = load_data_sources()
-    new_sources = [ds for ds in data_sources if ds.get("id") != ds_id]
+    new_sources = [ds for ds in data_sources if str(ds.get("id")) != str(ds_id)]
     if len(new_sources) == len(data_sources):
         raise HTTPException(status_code=404, detail="Data source not found")
     save_data_sources(new_sources)
     return {"detail": "Deleted"}
 
 @app.put("/datasources/{ds_id}")
-def update_data_source(ds_id: int, ds: DataSource):
+def update_data_source(ds_id: str, ds: DataSource):
     data_sources = load_data_sources()
     found = False
     for idx, existing in enumerate(data_sources):
-        if existing.get("id") == ds_id:
+        if str(existing.get("id")) == str(ds_id):
             # Prevent name duplication (except for itself)
-            if any(d["name"].lower() == ds.name.lower() and d["id"] != ds_id for d in data_sources):
+            if any(d["name"].lower() == ds.name.lower() and str(d["id"]) != str(ds_id) for d in data_sources):
                 raise HTTPException(status_code=400, detail="Data source name already exists.")
             # Encrypt account_key if present and changed
             if ds.type == "Azure Data Lake Storage" and "account_key" in ds.config:
@@ -100,17 +101,15 @@ def add_job(job: CopyJob):
     # Unique name check
     if any(j["name"].strip().lower() == job.name.strip().lower() for j in jobs):
         raise HTTPException(status_code=400, detail="A job with this name already exists.")
-    # Assign an id if not present
-    job.id = max([j.get("id", 0) for j in jobs] or [0]) + 1
     jobs.append(job.dict())
     save_jobs(jobs)
     return job
 
 @app.put("/jobs/{job_id}")
-def edit_job(job_id: int, job: CopyJob):
+def edit_job(job_id: str, job: CopyJob):
     jobs = load_jobs()
     for idx, j in enumerate(jobs):
-        if j.get("id") == job_id:
+        if str(j.get("id")) == str(job_id):
             job.id = job_id  # Ensure ID stays the same
             jobs[idx] = job.dict()
             save_jobs(jobs)
@@ -118,28 +117,10 @@ def edit_job(job_id: int, job: CopyJob):
     raise HTTPException(status_code=404, detail="Job not found")
 
 @app.delete("/jobs/{job_id}")
-def delete_job(job_id: int):
+def delete_job(job_id: str):
     jobs = load_jobs()
-    new_jobs = [j for j in jobs if j.get("id") != job_id]
+    new_jobs = [j for j in jobs if str(j.get("id")) != str(job_id)]
     if len(new_jobs) == len(jobs):
         raise HTTPException(status_code=404, detail="Job not found")
     save_jobs(new_jobs)
     return {"detail": "Deleted"}
-
-@app.post("/jobs/{job_id}/run")
-def run_job(job_id: int):
-    jobs = load_jobs()  # <-- Always load the latest jobs
-    job = next((j for j in jobs if j.get("id") == job_id), None)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    # Simple copy logic: copy all files from source to target
-    if not os.path.exists(job["source"]):
-        raise HTTPException(status_code=400, detail="Source folder does not exist")
-    if not os.path.exists(job["target"]):
-        os.makedirs(job["target"])
-    for filename in os.listdir(job["source"]):
-        src_file = os.path.join(job["source"], filename)
-        dst_file = os.path.join(job["target"], filename)
-        if os.path.isfile(src_file):
-            shutil.copy2(src_file, dst_file)
-    return {"detail": f"Job {job_id} completed"}

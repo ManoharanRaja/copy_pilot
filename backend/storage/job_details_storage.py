@@ -1,6 +1,5 @@
 import os
 import json
-from backend.models.copy_job import CopyJob
 
 JOBS_FILE = "backend/data/job_details.json"
 
