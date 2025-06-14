@@ -12,6 +12,7 @@ import JobRunHistory from "./pages/JobRunHistory";
 import Scheduler from "./pages/Scheduler";
 import NewScheduler from "./pages/NewScheduler";
 import EditScheduler from "./pages/EditScheduler";
+import GlobalVariables from "./pages/GlobalVariables";
 
 const App = () => {
   return (
@@ -29,6 +30,7 @@ const App = () => {
           <Route path="/jobs" component={Jobs} />
           <Route path="/datasource/new" component={NewDataSource} />
           <Route path="/datasource" component={DataSource} />
+          <Route path="/global-variables" component={GlobalVariables} />
           <Route component={NotFound} />
         </Switch>
       </div>
