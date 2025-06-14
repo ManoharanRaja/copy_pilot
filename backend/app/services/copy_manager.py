@@ -158,9 +158,9 @@ def copy_azure_to_azure(source, target, file_mask, configs):
             tgt_path = f"{tgt_directory}/{filename}" if tgt_directory else filename
             tgt_file_client = tgt_fs_client.get_file_client(tgt_path)
             tgt_file_client.upload_data(file_content, overwrite=True)
-            copied_files.append(f"adl://{tgt_account_name}/{tgt_filesystem}/{tgt_path}")
+            copied_files.append(f"https://{tgt_account_name}.blob.core.windows.net/{tgt_filesystem}/{tgt_path}")
 
-        return copied_files, [f"adl://{src_account_name}/{src_filesystem}/{f}" for f in source_files]
+        return copied_files, [f"https://{src_account_name}.blob.core.windows.net/{src_filesystem}/{f}" for f in source_files]
     except AzureError as ae:
         logging.error(f"Azure to Azure copy failed (AzureError): {ae}")
         raise
