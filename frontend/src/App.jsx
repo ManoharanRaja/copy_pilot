@@ -13,6 +13,7 @@ import Scheduler from "./pages/Scheduler";
 import NewScheduler from "./pages/NewScheduler";
 import EditScheduler from "./pages/EditScheduler";
 import GlobalVariables from "./pages/GlobalVariables";
+import LocalVariables from "./pages/LocalVariables";
 
 const App = () => {
   return (
@@ -24,6 +25,7 @@ const App = () => {
           <Route path="/scheduler/edit/:id" component={EditScheduler} />
           <Route path="/scheduler" component={Scheduler} />
           <Route path="/configuration" component={Configuration} />
+          <Route path="/jobs/:id/local-variables" component={LocalVariables} />
           <Route path="/jobs/:id/run-history" component={JobRunHistory} />
           <Route path="/jobs/:id/edit" component={EditJob} />
           <Route path="/jobs/new" component={NewJob} />

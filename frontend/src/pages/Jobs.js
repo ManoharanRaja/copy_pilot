@@ -134,6 +134,14 @@ function Jobs() {
                 >
                   View run history
                 </button>
+                <button
+                  onClick={() =>
+                    history.push(`/jobs/${job.id}/local-variables`)
+                  }
+                  style={{ marginLeft: "5px" }}
+                >
+                  Define Job Variables
+                </button>
               </td>
             </tr>
           ))}
