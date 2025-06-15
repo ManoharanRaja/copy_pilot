@@ -25,10 +25,13 @@ function Dashboard() {
         <Link to="/datasource">Data Source</Link>
       </nav>
       <nav>
-        <Link to="/task">Add Copy Task</Link>
+        <Link to="/jobs">Copy Jobs</Link>
       </nav>
       <nav>
         <Link to="/scheduler">Scheduler</Link>
+      </nav>
+      <nav>
+        <Link to="/global-variables">Global Variables</Link>
       </nav>
     </div>
   );

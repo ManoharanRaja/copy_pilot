@@ -1,7 +1,8 @@
 import os
 import json
 
-DATA_SOURCE_FILE = r"C:\Users\priya\Desktop\Python\copy_pilot\backend\data_sources.json"
+DATA_SOURCE_FILE = "backend/data/data_sources.json"
+
 def load_data_sources():
     if not os.path.exists(DATA_SOURCE_FILE):
         return []
@@ -24,3 +25,20 @@ def load_data_sources():
 def save_data_sources(data_sources):
     with open(DATA_SOURCE_FILE, "w") as f:
         json.dump(data_sources, f, indent=2)
+        
+        
+def load_data_source_by_name(name):
+    with open(DATA_SOURCE_FILE, "r") as f:
+        sources = json.load(f)
+    for src in sources:
+        if src["name"] == name:
+            return src
+    raise ValueError(f"Data source '{name}' not found.")
+
+def load_data_source_by_id(id):
+    with open(DATA_SOURCE_FILE, "r") as f:
+        sources = json.load(f)
+    for src in sources:
+        if str(src["id"]) == str(id):
+            return src
+    raise ValueError(f"Data source with id '{id}' not found.")

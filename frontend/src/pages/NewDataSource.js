@@ -6,7 +6,7 @@ function NewDataSource() {
   const [selectedType, setSelectedType] = useState("");
   const [form, setForm] = useState({
     name: "",
-    type: "adls",
+    type: "Azure Data Lake Storage",
     account_name: "",
     account_key: "",
     container: "",
@@ -15,6 +15,7 @@ function NewDataSource() {
   const [testing, setTesting] = useState(false);
   const [errors, setErrors] = useState({});
   const history = useHistory();
+  const [testError, setTestError] = useState("");
 
   const handleTypeSelect = (type) => {
     setSelectedType(type);
@@ -46,6 +47,7 @@ function NewDataSource() {
     }
     setTesting(true);
     setTestStatus(null);
+    setTestError(""); // Reset error
     try {
       const config = {
         account_name: form.account_name,
@@ -58,11 +60,22 @@ function NewDataSource() {
       });
       if (res.data && res.data.success) {
         setTestStatus("success");
+        setTestError("");
       } else {
         setTestStatus("fail");
+        setTestError(
+          res.data && res.data.message
+            ? res.data.message
+            : "Connection failed. Please check your details."
+        );
       }
     } catch (err) {
       setTestStatus("fail");
+      setTestError(
+        err.response && err.response.data && err.response.data.message
+          ? err.response.data.message
+          : "Connection failed. Please check your details."
+      );
     }
     setTesting(false);
   };
@@ -105,8 +118,8 @@ function NewDataSource() {
       {!selectedType ? (
         <div>
           <h2>Select Data Source Type</h2>
-          <button onClick={() => handleTypeSelect("adls")}>
-            Azure Data Lake Storage (ADLS)
+          <button onClick={() => handleTypeSelect("Azure Data Lake Storage")}>
+            Azure Data Lake Storage (Azure Data Lake Storage)
           </button>
         </div>
       ) : (
@@ -200,9 +213,7 @@ function NewDataSource() {
             <div style={{ color: "green" }}>Connection successful!</div>
           )}
           {testStatus === "fail" && (
-            <div style={{ color: "red" }}>
-              Connection failed. Please check your details.
-            </div>
+            <div style={{ color: "red" }}>{testError}</div>
           )}
           <button
             type="submit"
