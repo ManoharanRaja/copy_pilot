@@ -21,8 +21,13 @@ function Jobs() {
   };
 
   const handleRun = async (id) => {
-    await axios.post(`/jobs/${id}/run`, { trigger_type: "manual" });
-    history.push(`/jobs/${id}/run-history`);
+    try {
+      await axios.post(`/jobs/${id}/run`, { trigger_type: "manual" });
+    } catch (err) {
+      // Do nothing: errors will be shown in run history
+    } finally {
+      history.push(`/jobs/${id}/run-history`);
+    }
   };
 
   // Helper to render details vertically in a cell
