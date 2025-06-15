@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useParams, useHistory } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
-function GlobalVariables() {
+function LocalVariables() {
+  const { id: jobId } = useParams();
+  const history = useHistory();
   const [vars, setVars] = useState([]);
   const [form, setForm] = useState({
     id: null,
@@ -17,16 +21,18 @@ function GlobalVariables() {
 
   useEffect(() => {
     fetchVars();
-  }, []);
+  }, [jobId]);
 
   const fetchVars = () => {
-    axios.get("/global-variables").then((res) => setVars(res.data));
+    axios
+      .get(`/jobs/${jobId}/local-variables`)
+      .then((res) => setVars(res.data));
   };
 
   const handleRunExpression = async () => {
     if (form.expression && form.name) {
       try {
-        const res = await axios.post("/global-variables/eval", {
+        const res = await axios.post(`/jobs/${jobId}/local-variables/eval`, {
           expr: form.expression,
           name: form.name,
         });
@@ -44,7 +50,7 @@ function GlobalVariables() {
   const handleRefresh = async (v) => {
     if (v.type === "dynamic") {
       try {
-        await axios.post("/global-variables/eval", {
+        await axios.post(`/jobs/${jobId}/local-variables/eval`, {
           expr: v.expression,
           name: v.name,
         });
@@ -61,7 +67,7 @@ function GlobalVariables() {
     try {
       const results = await Promise.allSettled(
         dynamicVars.map((v) =>
-          axios.post("/global-variables/eval", {
+          axios.post(`/jobs/${jobId}/local-variables/eval`, {
             expr: v.expression,
             name: v.name,
           })
@@ -106,10 +112,10 @@ function GlobalVariables() {
     }
     try {
       if (editing) {
-        await axios.put(`/global-variables/${form.id}`, form);
+        await axios.put(`/jobs/${jobId}/local-variables/${form.id}`, form);
       } else {
-        const { id, ...payload } = form;
-        await axios.post("/global-variables", payload);
+        const payload = { ...form, id: uuidv4() };
+        await axios.post(`/jobs/${jobId}/local-variables`, payload);
       }
       setForm({
         id: null,
@@ -129,21 +135,15 @@ function GlobalVariables() {
   };
 
   const handleEdit = (v) => {
-    setForm({
-      id: v.id,
-      name: v.name,
-      type: v.type || "static",
-      value: v.value || "",
-      expression: v.expression || "",
-    });
+    setForm({ ...v });
     setEditing(true);
     setError("");
     setEvalValue(v.type === "dynamic" ? v.value : "");
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (varId) => {
     if (window.confirm("Are you sure you want to delete this variable?")) {
-      await axios.delete(`/global-variables/${id}`);
+      await axios.delete(`/jobs/${jobId}/local-variables/${varId}`);
       fetchVars();
     }
   };
@@ -164,7 +164,7 @@ function GlobalVariables() {
           alignItems: "center",
         }}
       >
-        <h2>Global Variables</h2>
+        <h2>Local Variables for Job</h2>
         <button
           onClick={handleRefreshAll}
           disabled={refreshingAll}
@@ -176,10 +176,25 @@ function GlobalVariables() {
             borderRadius: 4,
             cursor: refreshingAll ? "not-allowed" : "pointer",
             fontWeight: "bold",
+            marginRight: 8,
           }}
           title="Refresh all dynamic variables"
         >
           {refreshingAll ? "Refreshing..." : "Refresh All"}
+        </button>
+        <button
+          onClick={() => history.push("/jobs")}
+          style={{
+            background: "#6c757d",
+            color: "#fff",
+            padding: "8px 16px",
+            border: "none",
+            borderRadius: 4,
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          Back to Jobs
         </button>
       </div>
       <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
@@ -348,4 +363,4 @@ function GlobalVariables() {
   );
 }
 
-export default GlobalVariables;
+export default LocalVariables;

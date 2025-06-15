@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Dict, Any
 import uuid
 
 class CopyJob(BaseModel):
@@ -15,3 +15,4 @@ class CopyJob(BaseModel):
     targetContainer: Optional[str] = None
     target: str
     targetFileMask: Optional[str] = None
+    local_variables: List[Dict[str, Any]] = Field(default_factory=list)
