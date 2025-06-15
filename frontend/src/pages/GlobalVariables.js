@@ -57,9 +57,9 @@ function GlobalVariables() {
 
   const handleRefreshAll = async () => {
     setRefreshingAll(true);
+    const dynamicVars = vars.filter((v) => v.type === "dynamic");
     try {
-      const dynamicVars = vars.filter((v) => v.type === "dynamic");
-      await Promise.all(
+      const results = await Promise.allSettled(
         dynamicVars.map((v) =>
           axios.post("/global-variables/eval", {
             expr: v.expression,
@@ -67,11 +67,16 @@ function GlobalVariables() {
           })
         )
       );
+      const failed = results
+        .map((r, i) => (r.status === "rejected" ? dynamicVars[i].name : null))
+        .filter(Boolean);
+      if (failed.length > 0) {
+        alert("Failed to refresh: " + failed.join(", "));
+      }
       fetchVars();
-    } catch {
-      alert("Failed to refresh all dynamic variables.");
+    } finally {
+      setRefreshingAll(false);
     }
-    setRefreshingAll(false);
   };
 
   const handleChange = (e) => {
