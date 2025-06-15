@@ -15,11 +15,11 @@ from backend.storage.global_variable_storage import load_global_variables
 from backend.utils.replace_placeholders import resolve_placeholders, find_missing_placeholders
 from backend.storage.job_details_storage import load_jobs, save_jobs
 
-router = APIRouter()
+router = APIRouter(prefix="/jobs")
 RUN_HISTORY_DIR = "backend/data/run_history"
 os.makedirs(RUN_HISTORY_DIR, exist_ok=True)
 
-@router.post("/jobs/{job_id}/run")
+@router.post("/{job_id}/run")
 async def run_job(job_id: str, request: Request):
     run_id = str(uuid.uuid4())
     try:
@@ -134,7 +134,7 @@ async def run_job(job_id: str, request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
     
-@router.get("/jobs/{job_id}/run-history")
+@router.get("/{job_id}/run-history")
 def get_run_history(job_id: str):
     history_file = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}.json")
     try:

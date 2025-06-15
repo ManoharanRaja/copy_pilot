@@ -4,7 +4,8 @@ import shutil
 import logging
 from azure.core.exceptions import AzureError
 from backend.utils.azure_utils import get_adl_service_client
-from backend.utils.crypto import decrypt,ENCRYPTION_KEY
+from backend.utils.crypto import decrypt
+from backend.config.settings import ENCRYPTION_KEY
 from backend.storage.data_source_storage import load_data_source_by_id
 import traceback
 
