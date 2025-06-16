@@ -101,7 +101,7 @@ function Jobs() {
             <th>Job Name</th>
             <th>Source</th>
             <th>Target</th>
-            <th>Schedule</th>
+            <th>Time Travel Run</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -111,37 +111,85 @@ function Jobs() {
               <td>{job.name}</td>
               <td>{renderSourceDetails(job)}</td>
               <td>{renderTargetDetails(job)}</td>
-              <td>{job.schedule || "Manual"}</td>
               <td>
-                <button onClick={() => history.push(`/jobs/${job.id}/edit`)}>
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(job.id)}
-                  style={{ marginLeft: "5px" }}
+                {job.time_travel && job.time_travel.enabled ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div style={{ fontWeight: "bold" }}>Enabled</div>
+                    <div>
+                      <span style={{ display: "block" }}>
+                        From: {job.time_travel.from_date || "-"}
+                      </span>
+                      <span style={{ display: "block" }}>
+                        To: {job.time_travel.to_date || "-"}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <span>Disabled</span>
+                )}
+              </td>
+              <td>
+                {/* First row: Edit, Delete, Run */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 4,
+                    width: "100%",
+                    gap: 0,
+                  }}
                 >
-                  Delete
-                </button>
-                <button
-                  onClick={() => handleRun(job.id)}
-                  style={{ marginLeft: "5px" }}
+                  <button
+                    style={{ flex: 1, margin: "0 4px" }}
+                    onClick={() => history.push(`/jobs/${job.id}/edit`)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    style={{ flex: 1, margin: "0 4px" }}
+                    onClick={() => handleDelete(job.id)}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    style={{ flex: 1, margin: "0 4px" }}
+                    onClick={() => handleRun(job.id)}
+                  >
+                    Run
+                  </button>
+                </div>
+                {/* Second row: View run history, Define Job Variables */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                    gap: 0,
+                  }}
                 >
-                  Run
-                </button>
-                <button
-                  onClick={() => history.push(`/jobs/${job.id}/run-history`)}
-                  style={{ marginLeft: "5px" }}
-                >
-                  View run history
-                </button>
-                <button
-                  onClick={() =>
-                    history.push(`/jobs/${job.id}/local-variables`)
-                  }
-                  style={{ marginLeft: "5px" }}
-                >
-                  Define Job Variables
-                </button>
+                  <button
+                    style={{ flex: 1, margin: "0 4px" }}
+                    onClick={() => history.push(`/jobs/${job.id}/run-history`)}
+                  >
+                    View run history
+                  </button>
+                  <button
+                    style={{ flex: 1, margin: "0 4px" }}
+                    onClick={() =>
+                      history.push(`/jobs/${job.id}/local-variables`)
+                    }
+                  >
+                    Define Job Variables
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

@@ -63,10 +63,22 @@ function NewJob() {
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
-    // Send to backend instead of downloading
+    // Build the payload with time_travel object
+    const payload = {
+      ...form,
+      time_travel: {
+        enabled: !!form.time_travel_enabled,
+        from_date: form.time_travel_from || null,
+        to_date: form.time_travel_to || null,
+      },
+    };
+    // Remove UI-only fields
+    delete payload.time_travel_enabled;
+    delete payload.time_travel_from;
+    delete payload.time_travel_to;
+
     try {
-      await axios.post("/jobs", form);
-      // Optionally, redirect or show a success message
+      await axios.post("/jobs", payload);
       history.push("/jobs");
     } catch (error) {
       const detail =
@@ -294,6 +306,67 @@ function NewJob() {
             </label>
           </div>
         </div>
+        <div style={{ marginTop: 16 }}>
+          <label>
+            <input
+              type="checkbox"
+              name="time_travel_enabled"
+              checked={!!form.time_travel_enabled}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  time_travel_enabled: e.target.checked,
+                  // Clear dates if unchecked
+                  ...(e.target.checked
+                    ? {}
+                    : { time_travel_from: "", time_travel_to: "" }),
+                }))
+              }
+            />
+            Enable Time Travel Run
+          </label>
+        </div>
+        {form.time_travel_enabled && (
+          <div style={{ marginTop: 8, display: "flex", gap: 16 }}>
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                fontWeight: "bold",
+              }}
+            >
+              From
+              <input
+                type="date"
+                name="time_travel_from"
+                value={form.time_travel_from || ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, time_travel_from: e.target.value }))
+                }
+                required
+              />
+            </label>
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                fontWeight: "bold",
+              }}
+            >
+              To
+              <input
+                type="date"
+                name="time_travel_to"
+                value={form.time_travel_to || ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, time_travel_to: e.target.value }))
+                }
+                required
+              />
+            </label>
+          </div>
+        )}
+        <br />
         <button type="submit">Save Job</button>
         <button
           type="button"
