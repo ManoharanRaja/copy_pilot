@@ -14,6 +14,7 @@ from backend.storage.run_history_storage import write_run_status, update_run_sta
 from backend.storage.global_variable_storage import load_global_variables
 from backend.utils.replace_placeholders import resolve_placeholders, find_missing_placeholders
 from backend.storage.job_details_storage import load_jobs, save_jobs
+from backend.utils.time_travel_utils import get_mocked_datetime_env, patch_datetime_calls
 
 router = APIRouter(prefix="/jobs")
 RUN_HISTORY_DIR = "backend/data/run_history"
@@ -42,8 +43,11 @@ async def run_job(job_id: str, request: Request):
         to_date = time_travel.get("to_date")
 
         # Helper to run the job for a specific date (for time travel)
-        async def run_for_date(run_id, run_date_str):
+        async def run_for_date(run_id, run_date_str,original_job):
             error_message = ""
+            # Create a copy of the job to avoid modifying the original
+            job = json.loads(json.dumps(original_job))
+            
             # Refresh dynamic local variables for this date
             updated = False
             for v in local_vars_list:
@@ -54,8 +58,10 @@ async def run_job(job_id: str, request: Request):
                     try:
                         sys_stdout = sys.stdout
                         sys.stdout = output
-                        # Inject run_date as the date being processed
-                        exec(code, {}, {})
+                        # Inject the custom system date for time travel
+                        mocked_env = get_mocked_datetime_env(datetime.strptime(run_date_str, '%Y-%m-%d').date())
+                        patched_code = patch_datetime_calls(code)
+                        exec(patched_code, mocked_env, {})
                         sys.stdout = sys_stdout
                         val = output.getvalue()
                         value = val.strip() if val else "Code executed. No output."
@@ -66,12 +72,7 @@ async def run_job(job_id: str, request: Request):
                     v["value"] = str(value)
                     updated = True
             if updated:
-                for job_obj in jobs:
-                    if str(job_obj.get("id")) == str(job_id):
-                        job_obj["local_variables"] = local_vars_list
-                        break
-                save_jobs(jobs)
-            local_vars = {v["name"]: v["value"] for v in local_vars_list}
+                local_vars = {v["name"]: v["value"] for v in local_vars_list}
 
             # Validate placeholders
             fields_to_check = [
@@ -144,7 +145,7 @@ async def run_job(job_id: str, request: Request):
             for n in range(num_days + 1):  # inclusive
                 this_date = from_dt + timedelta(days=n)
                 run_id_date = f"{parent_run_id}-{this_date.strftime('%Y%m%d')}"
-                result = await run_for_date(run_id_date, this_date.strftime('%Y-%m-%d'))
+                result = await run_for_date(run_id_date, this_date.strftime('%Y-%m-%d'), job)
                 date_runs.append(result)
             # Write a single parent run with all date results
             write_run_status(
@@ -168,7 +169,7 @@ async def run_job(job_id: str, request: Request):
         else:
             # Normal run for today's date
             today_str = datetime.now().strftime('%Y-%m-%d')
-            result = await run_for_date(parent_run_id, today_str)
+            result = await run_for_date(parent_run_id, today_str, job)
             write_run_status(
                 job_id,
                 parent_run_id,
