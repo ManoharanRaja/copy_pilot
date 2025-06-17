@@ -21,7 +21,13 @@ function EditJob() {
     axios.get("/jobs").then((res) => {
       setJobs(res.data || []);
       const job = (res.data || []).find((j) => String(j.id) === String(id));
-      setForm(job);
+      // Initialize time travel fields for editing
+      setForm({
+        ...job,
+        time_travel_enabled: job?.time_travel?.enabled || false,
+        time_travel_from: job?.time_travel?.from_date || "",
+        time_travel_to: job?.time_travel?.to_date || "",
+      });
       setLoading(false);
     });
   }, [id]);
@@ -38,6 +44,14 @@ function EditJob() {
     if (errors[e.target.name]) {
       setErrors({ ...errors, [e.target.name]: undefined });
     }
+  };
+
+  const handleTimeTravelCheckbox = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      time_travel_enabled: e.target.checked,
+      ...(e.target.checked ? {} : { time_travel_from: "", time_travel_to: "" }),
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -58,8 +72,22 @@ function EditJob() {
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
 
+    // Build the payload with time_travel object
+    const payload = {
+      ...form,
+      time_travel: {
+        enabled: !!form.time_travel_enabled,
+        from_date: form.time_travel_from || null,
+        to_date: form.time_travel_to || null,
+      },
+    };
+    // Remove UI-only fields
+    delete payload.time_travel_enabled;
+    delete payload.time_travel_from;
+    delete payload.time_travel_to;
+
     try {
-      await axios.put(`/jobs/${id}`, form);
+      await axios.put(`/jobs/${id}`, payload);
       history.push("/jobs");
     } catch (error) {
       const detail =
@@ -165,7 +193,10 @@ function EditJob() {
                 value={form.source}
                 onChange={handleChange}
                 required
-                style={errors.source ? { borderColor: "red" } : {}}
+                style={{
+                  ...(errors.source ? { borderColor: "red" } : {}),
+                  width: "400px", // Increased width for better horizontal length
+                }}
               />
               {errors.source && (
                 <span style={{ color: "red", fontSize: "12px" }}>
@@ -180,7 +211,10 @@ function EditJob() {
                 placeholder="File Mask (e.g. *.csv)"
                 value={form.sourceFileMask}
                 onChange={handleChange}
-                style={errors.sourceFileMask ? { borderColor: "red" } : {}}
+                style={{
+                  ...(errors.sourceFileMask ? { borderColor: "red" } : {}),
+                  width: "400px",
+                }}
               />
               {errors.sourceFileMask && (
                 <span style={{ color: "red", fontSize: "12px" }}>
@@ -261,7 +295,10 @@ function EditJob() {
                 value={form.target}
                 onChange={handleChange}
                 required
-                style={errors.target ? { borderColor: "red" } : {}}
+                style={{
+                  ...(errors.target ? { borderColor: "red" } : {}),
+                  width: "400px",
+                }}
               />
               {errors.target && (
                 <span style={{ color: "red", fontSize: "12px" }}>
@@ -276,7 +313,10 @@ function EditJob() {
                 placeholder="File Mask (e.g. *.csv)"
                 value={form.targetFileMask}
                 onChange={handleChange}
-                style={errors.targetFileMask ? { borderColor: "red" } : {}}
+                style={{
+                  ...(errors.targetFileMask ? { borderColor: "red" } : {}),
+                  width: "400px",
+                }}
               />
               {errors.targetFileMask && (
                 <span style={{ color: "red", fontSize: "12px" }}>
@@ -286,6 +326,54 @@ function EditJob() {
             </label>
           </div>
         </div>
+        {/* Time Travel Section */}
+        <div style={{ marginTop: 16 }}>
+          <label>
+            <input
+              type="checkbox"
+              name="time_travel_enabled"
+              checked={!!form.time_travel_enabled}
+              onChange={handleTimeTravelCheckbox}
+            />
+            Enable Time Travel Run
+          </label>
+        </div>
+        {form.time_travel_enabled && (
+          <div style={{ marginTop: 8, display: "flex", gap: 16 }}>
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                fontWeight: "bold",
+              }}
+            >
+              From
+              <input
+                type="date"
+                name="time_travel_from"
+                value={form.time_travel_from || ""}
+                onChange={handleChange}
+                required
+              />
+            </label>
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                fontWeight: "bold",
+              }}
+            >
+              To
+              <input
+                type="date"
+                name="time_travel_to"
+                value={form.time_travel_to || ""}
+                onChange={handleChange}
+                required
+              />
+            </label>
+          </div>
+        )}
         <button type="submit">Save</button>
         <button
           type="button"
