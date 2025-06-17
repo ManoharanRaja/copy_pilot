@@ -193,7 +193,10 @@ function EditJob() {
                 value={form.source}
                 onChange={handleChange}
                 required
-                style={errors.source ? { borderColor: "red" } : {}}
+                style={{
+                  ...(errors.source ? { borderColor: "red" } : {}),
+                  width: "400px", // Increased width for better horizontal length
+                }}
               />
               {errors.source && (
                 <span style={{ color: "red", fontSize: "12px" }}>
@@ -208,7 +211,10 @@ function EditJob() {
                 placeholder="File Mask (e.g. *.csv)"
                 value={form.sourceFileMask}
                 onChange={handleChange}
-                style={errors.sourceFileMask ? { borderColor: "red" } : {}}
+                style={{
+                  ...(errors.sourceFileMask ? { borderColor: "red" } : {}),
+                  width: "400px",
+                }}
               />
               {errors.sourceFileMask && (
                 <span style={{ color: "red", fontSize: "12px" }}>
@@ -289,7 +295,10 @@ function EditJob() {
                 value={form.target}
                 onChange={handleChange}
                 required
-                style={errors.target ? { borderColor: "red" } : {}}
+                style={{
+                  ...(errors.target ? { borderColor: "red" } : {}),
+                  width: "400px",
+                }}
               />
               {errors.target && (
                 <span style={{ color: "red", fontSize: "12px" }}>
@@ -304,7 +313,10 @@ function EditJob() {
                 placeholder="File Mask (e.g. *.csv)"
                 value={form.targetFileMask}
                 onChange={handleChange}
-                style={errors.targetFileMask ? { borderColor: "red" } : {}}
+                style={{
+                  ...(errors.targetFileMask ? { borderColor: "red" } : {}),
+                  width: "400px",
+                }}
               />
               {errors.targetFileMask && (
                 <span style={{ color: "red", fontSize: "12px" }}>
