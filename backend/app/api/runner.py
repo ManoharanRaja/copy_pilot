@@ -34,7 +34,19 @@ async def run_job(job_id: str, request: Request):
         global_vars = {v["name"]: v["value"] for v in load_global_variables()}
         local_vars_list = job.get("local_variables", [])
         local_vars = {v["name"]: v["value"] for v in local_vars_list} if local_vars_list else {}
-
+        
+        # --- NEW: Write "executing" status at the start ---
+        write_run_status(
+            job_id,
+            parent_run_id,
+            status="executing",
+            message="Job is running...",
+            trigger_type=trigger_type,
+            scheduler_id=scheduler_id,
+            extra_details={}
+        )
+        # --- END NEW ---
+        
         # Check for time travel config
         time_travel = job.get("time_travel", {})
         time_travel_enabled = time_travel.get("enabled", False)

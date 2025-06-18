@@ -37,21 +37,18 @@ function Jobs() {
 
   const handleRun = async (id) => {
     const machineName = localStorage.getItem("machineName") || "";
-    try {
-      await axios.post(
-        `/jobs/${id}/run`,
-        { trigger_type: "manual" },
-        {
-          headers: {
-            "X-Machine-Name": machineName,
-          },
-        }
-      );
-    } catch (err) {
-      // Do nothing: errors will be shown in run history
-    } finally {
-      history.push(`/jobs/${id}/run-history`);
-    }
+    // Redirect immediately
+    history.push(`/jobs/${id}/run-history?triggerRun=1`);
+    // Fire and forget the run request
+    axios.post(
+      `/jobs/${id}/run`,
+      { trigger_type: "manual" },
+      {
+        headers: {
+          "X-Machine-Name": machineName,
+        },
+      }
+    );
   };
 
   // Helper to render details vertically in a cell
