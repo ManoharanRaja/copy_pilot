@@ -77,8 +77,15 @@ function NewJob() {
     delete payload.time_travel_from;
     delete payload.time_travel_to;
 
+    // Get machine name from localStorage
+    const machineName = localStorage.getItem("machineName") || "";
+
     try {
-      await axios.post("/jobs", payload);
+      await axios.post("/jobs", payload, {
+        headers: {
+          "X-Machine-Name": machineName,
+        },
+      });
       history.push("/jobs");
     } catch (error) {
       const detail =

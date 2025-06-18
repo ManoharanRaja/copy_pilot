@@ -86,8 +86,15 @@ function EditJob() {
     delete payload.time_travel_from;
     delete payload.time_travel_to;
 
+    // Get machine name from localStorage
+    const machineName = localStorage.getItem("machineName") || "";
+
     try {
-      await axios.put(`/jobs/${id}`, payload);
+      await axios.put(`/jobs/${id}`, payload, {
+        headers: {
+          "X-Machine-Name": machineName,
+        },
+      });
       history.push("/jobs");
     } catch (error) {
       const detail =
@@ -95,7 +102,7 @@ function EditJob() {
         (typeof error.response?.data === "string"
           ? error.response.data
           : error.message);
-      alert("Failed to update job: " + detail);
+      alert("Failed to save job: " + detail);
     }
   };
 

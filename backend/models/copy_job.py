@@ -22,3 +22,8 @@ class CopyJob(BaseModel):
     targetFileMask: Optional[str] = None
     local_variables: List[Dict[str, Any]] = Field(default_factory=list)
     time_travel: Optional[TimeTravelConfig] = Field(default_factory=TimeTravelConfig)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    created_on: Optional[str] = None  # ISO format string
+    updated_on: Optional[str] = None  # ISO format string
+    latest_run_result: Optional[Dict[str, Any]] = None  # To store latest run info

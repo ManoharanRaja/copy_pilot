@@ -8,6 +8,7 @@ function Jobs() {
 
   useEffect(() => {
     fetchJobs();
+    // eslint-disable-next-line
   }, []);
 
   const fetchJobs = async () => {
@@ -99,6 +100,7 @@ function Jobs() {
         <thead>
           <tr>
             <th>Job Name</th>
+            <th>Job Details</th>
             <th>Source</th>
             <th>Target</th>
             <th>Time Travel Run</th>
@@ -109,6 +111,48 @@ function Jobs() {
           {jobs.map((job) => (
             <tr key={job.id}>
               <td>{job.name}</td>
+              <td>
+                <div>
+                  <b>Created By:</b> {job.created_by || "-"}
+                </div>
+                <div>
+                  <b>Created On:</b>{" "}
+                  {job.created_on
+                    ? new Date(job.created_on).toLocaleString()
+                    : "-"}
+                </div>
+                <div>
+                  <b>Last Updated By:</b> {job.updated_by || "-"}
+                </div>
+                <div>
+                  <b>Last Updated On:</b>{" "}
+                  {job.updated_on
+                    ? new Date(job.updated_on).toLocaleString()
+                    : "-"}
+                </div>
+                <div>
+                  <b>Last Run:</b>{" "}
+                  {job.latest_run_result ? (
+                    <>
+                      <span>Status: {job.latest_run_result.status}, </span>
+                      <span>
+                        Files Copied: {job.latest_run_result.copied_files_count}
+                        ,{" "}
+                      </span>
+                      <span>
+                        At:{" "}
+                        {job.latest_run_result.timestamp
+                          ? new Date(
+                              job.latest_run_result.timestamp
+                            ).toLocaleString()
+                          : "-"}
+                      </span>
+                    </>
+                  ) : (
+                    <span>No runs</span>
+                  )}
+                </div>
+              </td>
               <td>{renderSourceDetails(job)}</td>
               <td>{renderTargetDetails(job)}</td>
               <td>
