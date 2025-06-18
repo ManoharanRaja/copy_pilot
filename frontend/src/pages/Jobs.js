@@ -4,16 +4,30 @@ import { useHistory } from "react-router-dom";
 
 function Jobs() {
   const [jobs, setJobs] = useState([]);
+  const [dataSources, setDataSources] = useState([]);
   const history = useHistory();
 
   useEffect(() => {
     fetchJobs();
-    // eslint-disable-next-line
+    fetchDataSources();
   }, []);
 
   const fetchJobs = async () => {
     const res = await axios.get("/jobs");
     setJobs(res.data);
+  };
+
+  const fetchDataSources = async () => {
+    const res = await axios.get("/datasources");
+    setDataSources(res.data);
+  };
+
+  // Helper to get Azure account name by ID
+  const getAzureAccountName = (azureId) => {
+    const ds = dataSources.find(
+      (d) => d.id === azureId && d.type === "Azure Data Lake Storage"
+    );
+    return ds ? ds.config.account_name : "-";
   };
 
   const handleDelete = async (id) => {
@@ -22,8 +36,17 @@ function Jobs() {
   };
 
   const handleRun = async (id) => {
+    const machineName = localStorage.getItem("machineName") || "";
     try {
-      await axios.post(`/jobs/${id}/run`, { trigger_type: "manual" });
+      await axios.post(
+        `/jobs/${id}/run`,
+        { trigger_type: "manual" },
+        {
+          headers: {
+            "X-Machine-Name": machineName,
+          },
+        }
+      );
     } catch (err) {
       // Do nothing: errors will be shown in run history
     } finally {
@@ -36,6 +59,12 @@ function Jobs() {
     <div>
       <strong>Type:</strong> {job.sourceType}
       <br />
+      {job.sourceType === "azure" && (
+        <>
+          <strong>Account:</strong> {getAzureAccountName(job.sourceAzureId)}
+          <br />
+        </>
+      )}
       {job.sourceContainer && (
         <>
           <strong>Container:</strong> {job.sourceContainer}
@@ -57,6 +86,12 @@ function Jobs() {
     <div>
       <strong>Type:</strong> {job.targetType}
       <br />
+      {job.targetType === "azure" && (
+        <>
+          <strong>Account:</strong> {getAzureAccountName(job.targetAzureId)}
+          <br />
+        </>
+      )}
       {job.targetContainer && (
         <>
           <strong>Container:</strong> {job.targetContainer}
@@ -133,14 +168,29 @@ function Jobs() {
                 <div>
                   <b>Last Run:</b>{" "}
                   {job.latest_run_result ? (
+                    <span
+                      style={{
+                        color:
+                          job.latest_run_result.status === "Success"
+                            ? "green"
+                            : job.latest_run_result.status === "Failed"
+                            ? "red"
+                            : "orange",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Status: {job.latest_run_result.status}
+                    </span>
+                  ) : (
+                    <span style={{ color: "gray", fontWeight: "bold" }}>
+                      No runs
+                    </span>
+                  )}
+                  {job.latest_run_result && (
                     <>
-                      <span>Status: {job.latest_run_result.status}, </span>
                       <span>
-                        Files Copied: {job.latest_run_result.copied_files_count}
-                        ,{" "}
-                      </span>
-                      <span>
-                        At:{" "}
+                        , Files Copied:{" "}
+                        {job.latest_run_result.copied_files_count}, At:{" "}
                         {job.latest_run_result.timestamp
                           ? new Date(
                               job.latest_run_result.timestamp
@@ -148,8 +198,6 @@ function Jobs() {
                           : "-"}
                       </span>
                     </>
-                  ) : (
-                    <span>No runs</span>
                   )}
                 </div>
               </td>

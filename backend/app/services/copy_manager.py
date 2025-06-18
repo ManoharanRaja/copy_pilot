@@ -7,7 +7,6 @@ from backend.utils.azure_utils import get_adl_service_client
 from backend.utils.crypto import decrypt
 from backend.config.settings import ENCRYPTION_KEY
 from backend.storage.data_source_storage import load_data_source_by_id
-import traceback
 
 def get_azure_config_by_id(azure_id):
     ds = load_data_source_by_id(azure_id)
@@ -107,10 +106,10 @@ def copy_azure_to_local(source, target, file_mask, azure_config):
             copied_files.append(local_filename)
         return copied_files, [f"https://{account_name}.blob.core.windows.net/{filesystem}/{f}" for f in source_files]
     except AzureError as ae:
-        logging.error(f"Azure to Local copy failed (AzureError): {ae} | Traceback: {traceback.format_exc()}")
+        logging.error(f"Azure to Local copy failed (AzureError): {ae}")
         raise
     except Exception as e:
-        logging.error(f"Azure to Local copy failed: {e} | Traceback: {traceback.format_exc()}")
+        logging.error(f"Azure to Local copy failed: {e}")
         raise
 
 def copy_azure_to_azure(source, target, file_mask, configs):

@@ -1,6 +1,5 @@
 import os
 import json
-import traceback
 import uuid
 import io
 import sys
@@ -34,7 +33,7 @@ async def run_job(job_id: str, request: Request):
 
         global_vars = {v["name"]: v["value"] for v in load_global_variables()}
         local_vars_list = job.get("local_variables", [])
-        local_vars = {v["name"]: v["value"] for v in local_vars_list}
+        local_vars = {v["name"]: v["value"] for v in local_vars_list} if local_vars_list else {}
 
         # Check for time travel config
         time_travel = job.get("time_travel", {})
@@ -43,12 +42,9 @@ async def run_job(job_id: str, request: Request):
         to_date = time_travel.get("to_date")
 
         # Helper to run the job for a specific date (for time travel)
-        async def run_for_date(run_id, run_date_str,original_job):
+        async def run_for_date(run_id, run_date_str, original_job):
             error_message = ""
-            # Create a copy of the job to avoid modifying the original
             job = json.loads(json.dumps(original_job))
-            
-            # Refresh dynamic local variables for this date
             updated = False
             for v in local_vars_list:
                 if v["type"] == "dynamic":
@@ -58,7 +54,6 @@ async def run_job(job_id: str, request: Request):
                     try:
                         sys_stdout = sys.stdout
                         sys.stdout = output
-                        # Inject the custom system date for time travel
                         mocked_env = get_mocked_datetime_env(datetime.strptime(run_date_str, '%Y-%m-%d').date())
                         patched_code = patch_datetime_calls(code)
                         exec(patched_code, mocked_env, {})
@@ -71,8 +66,8 @@ async def run_job(job_id: str, request: Request):
                         error_message += f"Dynamic variable error ({v['name']}): {e}\n"
                     v["value"] = str(value)
                     updated = True
-            if updated:
-                local_vars = {v["name"]: v["value"] for v in local_vars_list}
+            # Always assign local_vars, even if local_vars_list is empty
+            local_vars = {v["name"]: v["value"] for v in local_vars_list}
 
             # Validate placeholders
             fields_to_check = [
@@ -122,7 +117,7 @@ async def run_job(job_id: str, request: Request):
                 copied_files = []
                 source_files = []
                 status = "Failed"
-                message = f"Copy failed: {repr(copy_exc)}\nTraceback:\n{traceback.format_exc()}"
+                message = f"Copy failed: {repr(copy_exc)}"
                 error_message += message
 
             return {
@@ -181,6 +176,17 @@ async def run_job(job_id: str, request: Request):
             )
             return JSONResponse(result)
     except Exception as e:
+        # Always log the failed run in run history for visibility in UI
+        write_run_status(
+            job_id,
+            parent_run_id,
+            status="Failed",
+            message=f"Unexpected error: {e}",
+            trigger_type="manual",
+            scheduler_id=None,
+            extra_details={"date_runs": [], "error_detail": str(e)}
+        )
+        # Return the error message to the frontend
         raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
 
 @router.get("/{job_id}/run-history")
