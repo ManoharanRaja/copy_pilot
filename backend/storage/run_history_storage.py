@@ -27,10 +27,12 @@ def write_run_status(
     extra_details=None
 ):
     """
-    Write a new run record with the given run_id and status to the run history file.
-    extra_details: dict, any additional info to log (e.g., time_travel_date, error_detail, etc.)
+    Write or update a run record with the given run_id and status to the run history file.
+    If a record with the same run_id exists, it will be replaced (overridden).
     """
     history = load_run_history(job_id)
+    # Remove any existing entry with the same run_id
+    history = [h for h in history if h.get("run_id") != run_id]
     run_record = {
         "run_id": run_id,
         "timestamp": datetime.utcnow().isoformat(),

@@ -4,15 +4,30 @@ import { useHistory } from "react-router-dom";
 
 function Jobs() {
   const [jobs, setJobs] = useState([]);
+  const [dataSources, setDataSources] = useState([]);
   const history = useHistory();
 
   useEffect(() => {
     fetchJobs();
+    fetchDataSources();
   }, []);
 
   const fetchJobs = async () => {
     const res = await axios.get("/jobs");
     setJobs(res.data);
+  };
+
+  const fetchDataSources = async () => {
+    const res = await axios.get("/datasources");
+    setDataSources(res.data);
+  };
+
+  // Helper to get Azure account name by ID
+  const getAzureAccountName = (azureId) => {
+    const ds = dataSources.find(
+      (d) => d.id === azureId && d.type === "Azure Data Lake Storage"
+    );
+    return ds ? ds.config.account_name : "-";
   };
 
   const handleDelete = async (id) => {
@@ -21,13 +36,19 @@ function Jobs() {
   };
 
   const handleRun = async (id) => {
-    try {
-      await axios.post(`/jobs/${id}/run`, { trigger_type: "manual" });
-    } catch (err) {
-      // Do nothing: errors will be shown in run history
-    } finally {
-      history.push(`/jobs/${id}/run-history`);
-    }
+    const machineName = localStorage.getItem("machineName") || "";
+    // Redirect immediately
+    history.push(`/jobs/${id}/run-history?triggerRun=1`);
+    // Fire and forget the run request
+    axios.post(
+      `/jobs/${id}/run`,
+      { trigger_type: "manual" },
+      {
+        headers: {
+          "X-Machine-Name": machineName,
+        },
+      }
+    );
   };
 
   // Helper to render details vertically in a cell
@@ -35,6 +56,12 @@ function Jobs() {
     <div>
       <strong>Type:</strong> {job.sourceType}
       <br />
+      {job.sourceType === "azure" && (
+        <>
+          <strong>Account:</strong> {getAzureAccountName(job.sourceAzureId)}
+          <br />
+        </>
+      )}
       {job.sourceContainer && (
         <>
           <strong>Container:</strong> {job.sourceContainer}
@@ -56,6 +83,12 @@ function Jobs() {
     <div>
       <strong>Type:</strong> {job.targetType}
       <br />
+      {job.targetType === "azure" && (
+        <>
+          <strong>Account:</strong> {getAzureAccountName(job.targetAzureId)}
+          <br />
+        </>
+      )}
       {job.targetContainer && (
         <>
           <strong>Container:</strong> {job.targetContainer}
@@ -99,6 +132,7 @@ function Jobs() {
         <thead>
           <tr>
             <th>Job Name</th>
+            <th>Job Details</th>
             <th>Source</th>
             <th>Target</th>
             <th>Time Travel Run</th>
@@ -109,6 +143,61 @@ function Jobs() {
           {jobs.map((job) => (
             <tr key={job.id}>
               <td>{job.name}</td>
+              <td>
+                <div>
+                  <b>Created By:</b> {job.created_by || "-"}
+                </div>
+                <div>
+                  <b>Created On:</b>{" "}
+                  {job.created_on
+                    ? new Date(job.created_on).toLocaleString()
+                    : "-"}
+                </div>
+                <div>
+                  <b>Last Updated By:</b> {job.updated_by || "-"}
+                </div>
+                <div>
+                  <b>Last Updated On:</b>{" "}
+                  {job.updated_on
+                    ? new Date(job.updated_on).toLocaleString()
+                    : "-"}
+                </div>
+                <div>
+                  <b>Last Run:</b>{" "}
+                  {job.latest_run_result ? (
+                    <span
+                      style={{
+                        color:
+                          job.latest_run_result.status === "Success"
+                            ? "green"
+                            : job.latest_run_result.status === "Failed"
+                            ? "red"
+                            : "orange",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Status: {job.latest_run_result.status}
+                    </span>
+                  ) : (
+                    <span style={{ color: "gray", fontWeight: "bold" }}>
+                      No runs
+                    </span>
+                  )}
+                  {job.latest_run_result && (
+                    <>
+                      <span>
+                        , Files Copied:{" "}
+                        {job.latest_run_result.copied_files_count}, At:{" "}
+                        {job.latest_run_result.timestamp
+                          ? new Date(
+                              job.latest_run_result.timestamp
+                            ).toLocaleString()
+                          : "-"}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </td>
               <td>{renderSourceDetails(job)}</td>
               <td>{renderTargetDetails(job)}</td>
               <td>
