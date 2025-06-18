@@ -9,6 +9,17 @@ function JobRunHistory() {
   const [expanded, setExpanded] = useState(null);
   const [expandedDateRun, setExpandedDateRun] = useState(null);
   const [jobName, setJobName] = useState("");
+  const [schedulers, setSchedulers] = useState([]);
+
+  // Fetch schedulers for mapping ID to name
+  const fetchSchedulers = async () => {
+    try {
+      const res = await axios.get("/schedules");
+      setSchedulers(res.data || []);
+    } catch {
+      setSchedulers([]);
+    }
+  };
 
   const fetchHistory = async () => {
     const res = await axios.get(`/jobs/${id}/run-history`);
@@ -24,8 +35,20 @@ function JobRunHistory() {
   useEffect(() => {
     fetchHistory();
     fetchJobName();
+    fetchSchedulers();
     // eslint-disable-next-line
   }, [id]);
+
+  // Helper to get scheduler name by ID (case-insensitive, trims whitespace)
+  const getSchedulerName = (schedulerId) => {
+    if (!schedulerId) return "-";
+    const scheduler = schedulers.find(
+      (s) =>
+        String(s.id).trim().toLowerCase() ===
+        String(schedulerId).trim().toLowerCase()
+    );
+    return scheduler ? scheduler.name : schedulerId;
+  };
 
   return (
     <div>
@@ -75,7 +98,8 @@ function JobRunHistory() {
                   {run.trigger_type === "scheduled" ? (
                     run.scheduler_id ? (
                       <>
-                        Scheduled Run - Scheduler ID: <b>{run.scheduler_id}</b>
+                        Scheduled Run - Scheduler Name:{" "}
+                        <b>{getSchedulerName(run.scheduler_id)}</b>
                       </>
                     ) : (
                       "Scheduled Run"
@@ -92,11 +116,9 @@ function JobRunHistory() {
                   </button>
                 </td>
               </tr>
-              {/* If this run is expanded */}
               {expanded === idx && (
                 <tr>
                   <td colSpan={6}>
-                    {/* Only show time travel details if there are multiple date_runs */}
                     {Array.isArray(run.date_runs) &&
                     run.date_runs.length > 1 ? (
                       (() => {
