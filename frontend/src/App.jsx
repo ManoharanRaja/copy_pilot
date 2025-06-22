@@ -3,17 +3,18 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Configuration from "./pages/Configuration";
 import NotFound from "./pages/NotFound";
-import Jobs from "./pages/Jobs";
-import DataSource from "./pages/DataSource";
-import NewDataSource from "./pages/NewDataSource";
-import NewJob from "./pages/NewJob";
-import EditJob from "./pages/EditJob";
-import JobRunHistory from "./pages/JobRunHistory";
-import Scheduler from "./pages/Scheduler";
-import NewScheduler from "./pages/NewScheduler";
-import EditScheduler from "./pages/EditScheduler";
-import GlobalVariables from "./pages/GlobalVariables";
-import LocalVariables from "./pages/LocalVariables";
+import DataSource from "./pages/datasource/DataSource";
+import NewDataSource from "./pages/datasource/NewDataSource";
+import EditDataSource from "./pages/datasource/EditDataSource";
+import Jobs from "./pages/jobs/Jobs";
+import NewJob from "./pages/jobs/NewJob";
+import EditJob from "./pages/jobs/EditJob";
+import JobRunHistory from "./pages/jobs/JobRunHistory";
+import Scheduler from "./pages/scheduler/Scheduler";
+import NewScheduler from "./pages/scheduler/NewScheduler";
+import EditScheduler from "./pages/scheduler/EditScheduler";
+import GlobalVariables from "./pages/vars/GlobalVariables";
+import LocalVariables from "./pages/vars/LocalVariables";
 
 const App = () => {
   return (
@@ -30,6 +31,7 @@ const App = () => {
           <Route path="/jobs/:id/edit" component={EditJob} />
           <Route path="/jobs/new" component={NewJob} />
           <Route path="/jobs" component={Jobs} />
+          <Route path="/datasource/:id/edit" component={EditDataSource} />
           <Route path="/datasource/new" component={NewDataSource} />
           <Route path="/datasource" component={DataSource} />
           <Route path="/global-variables" component={GlobalVariables} />

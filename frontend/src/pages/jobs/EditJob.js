@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useHistory } from "react-router-dom";
-import { validateJob } from "../utils/jobValidation";
-
+import { validateJob } from "../../utils/jobValidation";
 function EditJob() {
   const { id } = useParams();
   const history = useHistory();
