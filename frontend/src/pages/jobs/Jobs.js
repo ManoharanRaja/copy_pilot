@@ -224,7 +224,7 @@ function Jobs() {
                 )}
               </td>
               <td>
-                {/* First row: Edit, Delete, Run */}
+                {/* First row: Edit, Delete, Run, Clone */}
                 <div
                   style={{
                     display: "flex",
@@ -252,6 +252,12 @@ function Jobs() {
                     onClick={() => handleRun(job.id)}
                   >
                     Run
+                  </button>
+                  <button
+                    style={{ flex: 1, margin: "0 4px" }}
+                    onClick={() => history.push(`/jobs/${job.id}/clone`)}
+                  >
+                    Clone
                   </button>
                 </div>
                 {/* Second row: View run history, Define Job Variables */}
