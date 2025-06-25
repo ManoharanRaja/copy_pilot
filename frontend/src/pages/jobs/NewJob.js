@@ -78,7 +78,11 @@ function NewJob() {
     delete payload.time_travel_to;
 
     // Get machine name from localStorage
-    const machineName = localStorage.getItem("machineName") || "";
+    let machineName = localStorage.getItem("machineName");
+    if (!machineName) {
+      machineName = prompt("Please enter your user name:") || "unknown";
+      localStorage.setItem("machineName", machineName);
+    }
 
     try {
       await axios.post("/jobs", payload, {

@@ -36,7 +36,11 @@ function Jobs() {
   };
 
   const handleRun = async (id) => {
-    const machineName = localStorage.getItem("machineName") || "";
+    let machineName = localStorage.getItem("machineName");
+    if (!machineName) {
+      machineName = prompt("Please enter your user name:") || "unknown";
+      localStorage.setItem("machineName", machineName);
+    }
     // Redirect immediately
     history.push(`/jobs/${id}/run-history?triggerRun=1`);
     // Fire and forget the run request
