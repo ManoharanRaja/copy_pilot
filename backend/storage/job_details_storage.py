@@ -1,5 +1,6 @@
 import os
 import json
+from filelock import FileLock
 
 JOBS_FILE = "backend/data/job_details.json"
 
@@ -13,5 +14,6 @@ def load_jobs():
     return []
 
 def save_jobs(jobs):
-    with open(JOBS_FILE, "w") as f:
-        json.dump(jobs, f, indent=2)
+    with FileLock(JOBS_FILE + ".lock"):
+        with open(JOBS_FILE, "w") as f:
+            json.dump(jobs, f, indent=2)

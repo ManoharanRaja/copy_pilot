@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime
+from filelock import FileLock
 
 def load_run_history(job_id):
     history_file = f"backend/data/run_history/run_history_{job_id}.json"
@@ -10,9 +11,10 @@ def load_run_history(job_id):
     return []
 
 def save_run_history(job_id, history):
-    history_file = f"backend/data/run_history/run_history_{job_id}.json"
-    with open(history_file, "w") as f:
-        json.dump(history, f, indent=2)
+    with FileLock(f"backend/data/run_history/run_history_{job_id}.json.lock"):
+        history_file = f"backend/data/run_history/run_history_{job_id}.json"
+        with open(history_file, "w") as f:
+            json.dump(history, f, indent=2)
 
 def write_run_status(
     job_id,
