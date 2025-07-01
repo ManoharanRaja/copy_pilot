@@ -219,13 +219,13 @@ def copy_azure_to_smb(source, target, file_mask, azure_config):
 COPY_FUNCTIONS = {
     ("local", "local"): copy_local_to_local,
     ("local", "azure"): copy_local_to_azure,
-    ("local", "smb"): copy_local_to_smb,
+    ("local", "shared"): copy_local_to_smb,
     ("azure", "local"): copy_azure_to_local,
     ("azure", "azure"): copy_azure_to_azure,
-    ("azure", "smb"): copy_azure_to_smb,
-    ("smb", "local"): copy_smb_to_local,
-    ("smb", "azure"): copy_smb_to_azure,
-    ("smb", "smb"): copy_smb_to_smb,
+    ("azure", "shared"): copy_azure_to_smb,
+    ("shared", "local"): copy_smb_to_local,
+    ("shared", "azure"): copy_smb_to_azure,
+    ("shared", "shared"): copy_smb_to_smb,
 }
 
 def dispatch_copy(job):
