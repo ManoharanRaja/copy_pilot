@@ -85,9 +85,17 @@ function CloneJob() {
   return (
     <Container maxWidth="sm" sx={{ mt: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Clone Job
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src="/clonejobs.png"
+            alt="Clone Jobs"
+            style={{ width: 80, height: 80, marginRight: 12 }} // doubled from 40 to 80
+          />
+          <Typography variant="h5" gutterBottom>
+            Clone Job
+          </Typography>
+        </Box>
+
         <Box
           component="form"
           onSubmit={handleSubmit}

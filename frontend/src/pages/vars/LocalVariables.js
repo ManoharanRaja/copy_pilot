@@ -31,6 +31,7 @@ function LocalVariables() {
     value: "",
     expression: "",
   });
+  const [jobName, setJobName] = useState("");
   const [evalValue, setEvalValue] = useState("");
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
@@ -38,6 +39,7 @@ function LocalVariables() {
 
   useEffect(() => {
     fetchVars();
+    fetchJobName();
     // eslint-disable-next-line
   }, [jobId]);
 
@@ -45,6 +47,12 @@ function LocalVariables() {
     axios
       .get(`/jobs/${jobId}/local-variables`)
       .then((res) => setVars(res.data));
+  };
+
+  const fetchJobName = async () => {
+    const res = await axios.get("/jobs");
+    const job = res.data.find((j) => String(j.id) === String(jobId));
+    setJobName(job ? job.name : jobId);
   };
 
   const handleRunExpression = async () => {
@@ -189,9 +197,17 @@ function LocalVariables() {
         justifyContent="space-between"
         mb={2}
       >
-        <Typography variant="h5" fontWeight={700}>
-          Local Variables for Job
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src="/localvars.png"
+            alt="Local Variables"
+            style={{ width: 80, height: 80, marginRight: 12 }} // doubled from 40 to 80
+          />
+          <Typography variant="h4" fontWeight={700}>
+            Local Variables for Job: {jobName}
+          </Typography>
+        </Box>
+
         <Stack direction="row" spacing={1}>
           <Button
             onClick={handleRefreshAll}

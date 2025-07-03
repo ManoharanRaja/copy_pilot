@@ -109,9 +109,17 @@ function JobRunHistory() {
         py: 4,
       }}
     >
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 4 }}>
-        Run History for Job: {jobName}
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <img
+          src="/runhistory.png"
+          alt="Run History"
+          style={{ width: 80, height: 80, marginRight: 12 }} // doubled from 40 to 80
+        />
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 4 }}>
+          Run History for Job: {jobName}
+        </Typography>
+      </Box>
+
       <Button
         variant="outlined"
         sx={{ mb: 2 }}
