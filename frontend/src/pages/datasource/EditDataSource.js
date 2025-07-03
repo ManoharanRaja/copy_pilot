@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useHistory, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  Container,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Box,
+  Stack,
+  Alert,
+  CircularProgress,
+} from "@mui/material";
 
 function EditDataSource() {
   const { id } = useParams();
@@ -15,10 +26,9 @@ function EditDataSource() {
   const [testing, setTesting] = useState(false);
   const [errors, setErrors] = useState({});
   const [testError, setTestError] = useState("");
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch data source details by ID
     axios.get(`/datasources`).then((res) => {
       const ds = (res.data || []).find((d) => String(d.id) === String(id));
       if (ds) {
@@ -106,7 +116,7 @@ function EditDataSource() {
           container: form.container,
         },
       });
-      history.push("/datasource");
+      navigate("/datasource");
     } catch (error) {
       if (
         error.response &&
@@ -121,116 +131,106 @@ function EditDataSource() {
   };
 
   return (
-    <div>
-      <h1>Edit Data Source</h1>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          marginTop: 40,
-          maxWidth: 400,
-          background: "#fafafa",
-          padding: 24,
-          borderRadius: 8,
-          boxShadow: "0 2px 8px #eee",
-          display: "flex",
-          flexDirection: "column",
-          gap: 16,
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label style={{ marginBottom: 4 }}>
-            Name<span style={{ color: "red" }}> *</span>
-          </label>
-          <input
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Edit Data Source
+        </Typography>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            mt: 2,
+          }}
+        >
+          <TextField
+            label="Name"
             name="name"
-            placeholder="Enter name *"
             value={form.name}
             onChange={handleChange}
-            style={{ padding: 8 }}
+            required
+            error={!!errors.name}
+            helperText={errors.name}
           />
-          {errors.name && (
-            <span style={{ color: "red", fontSize: 12 }}>{errors.name}</span>
-          )}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label style={{ marginBottom: 4 }}>
-            Account Name<span style={{ color: "red" }}> *</span>
-          </label>
-          <input
+          <TextField
+            label="Account Name"
             name="account_name"
-            placeholder="Enter account name *"
             value={form.account_name}
             onChange={handleChange}
-            style={{ padding: 8 }}
+            required
+            error={!!errors.account_name}
+            helperText={
+              errors.account_name ||
+              `https://${
+                form.account_name || "{account_name}"
+              }.dfs.core.windows.net/`
+            }
           />
-          <span style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
-            https://{form.account_name || "{account_name}"}
-            .dfs.core.windows.net/
-          </span>
-          {errors.account_name && (
-            <span style={{ color: "red", fontSize: 12 }}>
-              {errors.account_name}
-            </span>
-          )}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label style={{ marginBottom: 4 }}>
-            Account Key<span style={{ color: "red" }}> *</span>
-          </label>
-          <input
+          <TextField
+            label="Account Key"
             name="account_key"
             type="password"
-            placeholder="Enter account key *"
             value={form.account_key}
             onChange={handleChange}
-            style={{ padding: 8 }}
+            required
+            error={!!errors.account_key}
+            helperText={errors.account_key}
           />
-          {errors.account_key && (
-            <span style={{ color: "red", fontSize: 12 }}>
-              {errors.account_key}
-            </span>
-          )}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <label style={{ marginBottom: 4 }}>Container</label>
-          <input
+          <TextField
+            label="Container (Optional)"
             name="container"
-            placeholder="Container (Optional)"
             value={form.container}
             onChange={handleChange}
-            style={{ padding: 8 }}
           />
-        </div>
-        <button
-          type="button"
-          onClick={handleTest}
-          style={{ marginTop: 8 }}
-          disabled={testing}
-        >
-          {testing ? "Testing..." : "Test"}
-        </button>
-        {testStatus === "success" && (
-          <div style={{ color: "green" }}>Connection successful!</div>
-        )}
-        {testStatus === "fail" && (
-          <div style={{ color: "red" }}>{testError}</div>
-        )}
-        <button
-          type="submit"
-          style={{ marginTop: 8 }}
-          disabled={testStatus !== "success"}
-        >
-          Save
-        </button>
-        <button
-          type="button"
-          onClick={() => history.push("/datasource")}
-          style={{ marginTop: 4 }}
-        >
-          Cancel
-        </button>
-      </form>
-    </div>
+          <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={handleTest}
+              disabled={testing}
+            >
+              {testing ? (
+                <>
+                  <CircularProgress size={18} sx={{ mr: 1 }} />
+                  Testing...
+                </>
+              ) : (
+                "Test"
+              )}
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={testStatus !== "success"}
+            >
+              Save
+            </Button>
+            <Button
+              type="button"
+              variant="outlined"
+              color="secondary"
+              onClick={() => navigate("/datasource")}
+            >
+              Cancel
+            </Button>
+          </Stack>
+          {testStatus === "success" && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              Connection successful!
+            </Alert>
+          )}
+          {testStatus === "fail" && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {testError}
+            </Alert>
+          )}
+        </Box>
+      </Paper>
+    </Container>
   );
 }
 

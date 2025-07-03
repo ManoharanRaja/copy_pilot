@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useParams, useHistory, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+  Typography,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Box,
+  Collapse,
+  Alert,
+  Stack,
+} from "@mui/material";
 
 function JobRunHistory() {
   const { id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const [isPolling, setIsPolling] = useState(false);
   const [runHistory, setRunHistory] = useState([]);
@@ -86,241 +100,291 @@ function JobRunHistory() {
   };
 
   return (
-    <div>
-      <h2>Run History for Job: {jobName}</h2>
-      <button onClick={() => history.push("/jobs")}>Back to Jobs</button>
-      {isPolling && (
-        <div style={{ color: "orange", fontWeight: "bold", margin: "10px 0" }}>
-          Running... Please wait.
-        </div>
-      )}
-      <table
-        border="1"
-        cellPadding="8"
-        style={{ marginTop: "20px", width: "100%" }}
+    <Box
+      sx={{
+        width: "100vw",
+        minHeight: "100vh",
+        bgcolor: "transparent",
+        px: { xs: 2, md: 6 },
+        py: 4,
+      }}
+    >
+      <Typography variant="h4" sx={{ fontWeight: 700, mb: 4 }}>
+        Run History for Job: {jobName}
+      </Typography>
+      <Button
+        variant="outlined"
+        sx={{ mb: 2 }}
+        onClick={() => navigate("/jobs")}
       >
-        <thead>
-          <tr>
-            <th>RunId</th>
-            <th>Timestamp</th>
-            <th>Status</th>
-            <th>Message</th>
-            <th>Trigger Type</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody>
-          {runHistory.length === 0 && (
-            <tr>
-              <td colSpan={6}>No run history yet.</td>
-            </tr>
-          )}
-          {[...runHistory]
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .map((run, idx) => (
-              <React.Fragment key={idx}>
-                <tr>
-                  <td>{idx + 1}</td>
-                  <td>{run.timestamp}</td>
-                  <td
-                    style={{
-                      color:
-                        run.status === "Success"
-                          ? "green"
-                          : run.status === "Failed"
-                          ? "red"
-                          : "orange",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {run.status}
-                  </td>
-                  <td>{run.message}</td>
-                  <td>
-                    {run.trigger_type === "scheduled" ? (
-                      run.scheduler_id ? (
-                        <>
-                          Scheduled Run - Scheduler Name:{" "}
-                          <b>{getSchedulerName(run.scheduler_id)}</b>
-                        </>
-                      ) : (
-                        "Scheduled Run"
-                      )
-                    ) : (
-                      "Manual Trigger"
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => setExpanded(expanded === idx ? null : idx)}
+        Back to Jobs
+      </Button>
+      {isPolling && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Running... Please wait.
+        </Alert>
+      )}
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>RunId</TableCell>
+              <TableCell>Timestamp</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Message</TableCell>
+              <TableCell>Trigger Type</TableCell>
+              <TableCell>Details</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {runHistory.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6}>No run history yet.</TableCell>
+              </TableRow>
+            )}
+            {[...runHistory]
+              .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+              .map((run, idx) => (
+                <React.Fragment key={idx}>
+                  <TableRow>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell>{run.timestamp}</TableCell>
+                    <TableCell
+                      sx={{
+                        color:
+                          run.status === "Success"
+                            ? "green"
+                            : run.status === "Failed"
+                            ? "red"
+                            : "orange",
+                        fontWeight: "bold",
+                      }}
                     >
-                      {expanded === idx ? "Hide" : "Show"}
-                    </button>
-                  </td>
-                </tr>
-                {expanded === idx && (
-                  <tr>
-                    <td colSpan={6}>
-                      {Array.isArray(run.date_runs) &&
-                      run.date_runs.length > 1 ? (
-                        (() => {
-                          const passCount = run.date_runs.filter(
-                            (dr) => dr.status === "Success"
-                          ).length;
-                          const failCount = run.date_runs.filter(
-                            (dr) => dr.status === "Failed"
-                          ).length;
-                          const overallStatus =
-                            failCount > 0
-                              ? "Completed with Failure"
-                              : "Success";
-                          return (
-                            <div>
-                              <b>
-                                Time Travel Run Details:{" "}
-                                <span
-                                  style={{
-                                    color:
-                                      overallStatus === "Success"
-                                        ? "green"
-                                        : "red",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  {overallStatus}
-                                </span>
-                              </b>
-                              <div>
-                                <span style={{ color: "green" }}>
-                                  Passed: {passCount}
-                                </span>
-                                {" | "}
-                                <span style={{ color: "red" }}>
-                                  Failed: {failCount}
-                                </span>
-                              </div>
-                              <table
-                                border="1"
-                                cellPadding="6"
-                                style={{ marginTop: "10px", width: "100%" }}
-                              >
-                                <thead>
-                                  <tr>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Message</th>
-                                    <th>Details</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {run.date_runs.map((dateRun, dIdx) => (
-                                    <React.Fragment key={dIdx}>
-                                      <tr>
-                                        <td>{dateRun.date}</td>
-                                        <td
-                                          style={{
-                                            color:
-                                              dateRun.status === "Success"
-                                                ? "green"
-                                                : dateRun.status === "Failed"
-                                                ? "red"
-                                                : "orange",
-                                            fontWeight: "bold",
-                                          }}
-                                        >
-                                          {dateRun.status}
-                                        </td>
-                                        <td>{dateRun.message}</td>
-                                        <td>
-                                          <button
-                                            onClick={() =>
-                                              setExpandedDateRun(
-                                                expandedDateRun ===
-                                                  `${idx}-${dIdx}`
-                                                  ? null
-                                                  : `${idx}-${dIdx}`
-                                              )
-                                            }
-                                          >
-                                            {expandedDateRun ===
-                                            `${idx}-${dIdx}`
-                                              ? "Hide"
-                                              : "Show"}
-                                          </button>
-                                        </td>
-                                      </tr>
-                                      {expandedDateRun === `${idx}-${dIdx}` && (
-                                        <tr>
-                                          <td colSpan={4}>
-                                            <div>
-                                              <b>File Mask Used:</b>{" "}
-                                              {dateRun.file_mask_used || "-"}
-                                              <br />
-                                              <br />
-                                              <b>Matching Source Files:</b>
-                                              <ul>
-                                                {dateRun.source_files?.map(
-                                                  (f, i) => (
-                                                    <li key={i}>{f}</li>
-                                                  )
-                                                )}
-                                              </ul>
-                                              <b>Copied Files:</b>
-                                              <ul>
-                                                {dateRun.copied_files?.map(
-                                                  (f, i) => (
-                                                    <li key={i}>{f}</li>
-                                                  )
-                                                )}
-                                              </ul>
-                                            </div>
-                                          </td>
-                                        </tr>
-                                      )}
-                                    </React.Fragment>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          );
-                        })()
+                      {run.status}
+                    </TableCell>
+                    <TableCell>{run.message}</TableCell>
+                    <TableCell>
+                      {run.trigger_type === "scheduled" ? (
+                        run.scheduler_id ? (
+                          <>
+                            Scheduled Run - Scheduler Name:{" "}
+                            <b>{getSchedulerName(run.scheduler_id)}</b>
+                          </>
+                        ) : (
+                          "Scheduled Run"
+                        )
                       ) : (
-                        // For normal runs or single-date runs, show only copied file details
-                        <div>
-                          <b>File Mask Used:</b>{" "}
-                          {run.date_runs && run.date_runs[0]
-                            ? run.date_runs[0].file_mask_used || "-"
-                            : run.file_mask_used || "-"}
-                          <br />
-                          <br />
-                          <b>Matching Source Files:</b>
-                          <ul>
-                            {(run.date_runs && run.date_runs[0]
-                              ? run.date_runs[0].source_files
-                              : run.source_files
-                            )?.map((f, i) => (
-                              <li key={i}>{f}</li>
-                            ))}
-                          </ul>
-                          <b>Copied Files:</b>
-                          <ul>
-                            {(run.date_runs && run.date_runs[0]
-                              ? run.date_runs[0].copied_files
-                              : run.copied_files
-                            )?.map((f, i) => (
-                              <li key={i}>{f}</li>
-                            ))}
-                          </ul>
-                        </div>
+                        "Manual Trigger"
                       )}
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            ))}
-        </tbody>
-      </table>
-    </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() =>
+                          setExpanded(expanded === idx ? null : idx)
+                        }
+                      >
+                        {expanded === idx ? "Hide" : "Show"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell colSpan={6} sx={{ p: 0, border: 0 }}>
+                      <Collapse
+                        in={expanded === idx}
+                        timeout="auto"
+                        unmountOnExit
+                      >
+                        <Box sx={{ p: 2 }}>
+                          {Array.isArray(run.date_runs) &&
+                          run.date_runs.length > 1 ? (
+                            (() => {
+                              const passCount = run.date_runs.filter(
+                                (dr) => dr.status === "Success"
+                              ).length;
+                              const failCount = run.date_runs.filter(
+                                (dr) => dr.status === "Failed"
+                              ).length;
+                              const overallStatus =
+                                failCount > 0
+                                  ? "Completed with Failure"
+                                  : "Success";
+                              return (
+                                <Box>
+                                  <Typography>
+                                    <b>
+                                      Time Travel Run Details:{" "}
+                                      <span
+                                        style={{
+                                          color:
+                                            overallStatus === "Success"
+                                              ? "green"
+                                              : "red",
+                                          fontWeight: "bold",
+                                        }}
+                                      >
+                                        {overallStatus}
+                                      </span>
+                                    </b>
+                                  </Typography>
+                                  <Typography>
+                                    <span style={{ color: "green" }}>
+                                      Passed: {passCount}
+                                    </span>
+                                    {" | "}
+                                    <span style={{ color: "red" }}>
+                                      Failed: {failCount}
+                                    </span>
+                                  </Typography>
+                                  <Table size="small" sx={{ mt: 1 }}>
+                                    <TableHead>
+                                      <TableRow>
+                                        <TableCell>Date</TableCell>
+                                        <TableCell>Status</TableCell>
+                                        <TableCell>Message</TableCell>
+                                        <TableCell>Details</TableCell>
+                                      </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                      {run.date_runs.map((dateRun, dIdx) => (
+                                        <React.Fragment key={dIdx}>
+                                          <TableRow>
+                                            <TableCell>
+                                              {dateRun.date}
+                                            </TableCell>
+                                            <TableCell
+                                              sx={{
+                                                color:
+                                                  dateRun.status === "Success"
+                                                    ? "green"
+                                                    : dateRun.status ===
+                                                      "Failed"
+                                                    ? "red"
+                                                    : "orange",
+                                                fontWeight: "bold",
+                                              }}
+                                            >
+                                              {dateRun.status}
+                                            </TableCell>
+                                            <TableCell>
+                                              {dateRun.message}
+                                            </TableCell>
+                                            <TableCell>
+                                              <Button
+                                                size="small"
+                                                variant="outlined"
+                                                onClick={() =>
+                                                  setExpandedDateRun(
+                                                    expandedDateRun ===
+                                                      `${idx}-${dIdx}`
+                                                      ? null
+                                                      : `${idx}-${dIdx}`
+                                                  )
+                                                }
+                                              >
+                                                {expandedDateRun ===
+                                                `${idx}-${dIdx}`
+                                                  ? "Hide"
+                                                  : "Show"}
+                                              </Button>
+                                            </TableCell>
+                                          </TableRow>
+                                          <TableRow>
+                                            <TableCell
+                                              colSpan={4}
+                                              sx={{ p: 0, border: 0 }}
+                                            >
+                                              <Collapse
+                                                in={
+                                                  expandedDateRun ===
+                                                  `${idx}-${dIdx}`
+                                                }
+                                                timeout="auto"
+                                                unmountOnExit
+                                              >
+                                                <Box sx={{ p: 2 }}>
+                                                  <Typography>
+                                                    <b>File Mask Used:</b>{" "}
+                                                    {dateRun.file_mask_used ||
+                                                      "-"}
+                                                  </Typography>
+                                                  <Typography>
+                                                    <b>
+                                                      Matching Source Files:
+                                                    </b>
+                                                  </Typography>
+                                                  <ul>
+                                                    {dateRun.source_files?.map(
+                                                      (f, i) => (
+                                                        <li key={i}>{f}</li>
+                                                      )
+                                                    )}
+                                                  </ul>
+                                                  <Typography>
+                                                    <b>Copied Files:</b>
+                                                  </Typography>
+                                                  <ul>
+                                                    {dateRun.copied_files?.map(
+                                                      (f, i) => (
+                                                        <li key={i}>{f}</li>
+                                                      )
+                                                    )}
+                                                  </ul>
+                                                </Box>
+                                              </Collapse>
+                                            </TableCell>
+                                          </TableRow>
+                                        </React.Fragment>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </Box>
+                              );
+                            })()
+                          ) : (
+                            // For normal runs or single-date runs, show only copied file details
+                            <Box>
+                              <Typography>
+                                <b>File Mask Used:</b>{" "}
+                                {run.date_runs && run.date_runs[0]
+                                  ? run.date_runs[0].file_mask_used || "-"
+                                  : run.file_mask_used || "-"}
+                              </Typography>
+                              <Typography>
+                                <b>Matching Source Files:</b>
+                              </Typography>
+                              <ul>
+                                {(run.date_runs && run.date_runs[0]
+                                  ? run.date_runs[0].source_files
+                                  : run.source_files
+                                )?.map((f, i) => (
+                                  <li key={i}>{f}</li>
+                                ))}
+                              </ul>
+                              <Typography>
+                                <b>Copied Files:</b>
+                              </Typography>
+                              <ul>
+                                {(run.date_runs && run.date_runs[0]
+                                  ? run.date_runs[0].copied_files
+                                  : run.copied_files
+                                )?.map((f, i) => (
+                                  <li key={i}>{f}</li>
+                                ))}
+                              </ul>
+                            </Box>
+                          )}
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 }
 

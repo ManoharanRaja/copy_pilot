@@ -1,10 +1,24 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {
+  Container,
+  Typography,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Box,
+  Stack,
+} from "@mui/material";
 
 function DataSource() {
   const [sources, setSources] = useState([]);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchSources();
@@ -16,7 +30,7 @@ function DataSource() {
   };
 
   const handleEditPage = (id) => {
-    history.push(`/datasource/${id}/edit`);
+    navigate(`/datasource/${id}/edit`);
   };
 
   const handleDelete = async (id) => {
@@ -27,92 +41,80 @@ function DataSource() {
   };
 
   return (
-    <div style={{ position: "relative" }}>
-      <h1 style={{ display: "inline-block" }}>Data Sources</h1>
-      <button
-        style={{ float: "right", marginTop: 20 }}
-        onClick={() => history.push("/datasource/new")}
-      >
-        Add New Data Source
-      </button>
-      <table
-        style={{ width: "100%", marginTop: 40, borderCollapse: "collapse" }}
-      >
-        <thead>
-          <tr>
-            <th
-              style={{
-                borderBottom: "1px solid #ccc",
-                textAlign: "left",
-                padding: "8px",
-              }}
-            >
-              Name
-            </th>
-            <th
-              style={{
-                borderBottom: "1px solid #ccc",
-                textAlign: "left",
-                padding: "8px",
-              }}
-            >
-              Type
-            </th>
-            <th
-              style={{
-                borderBottom: "1px solid #ccc",
-                textAlign: "left",
-                padding: "8px",
-              }}
-            >
-              Config
-            </th>
-            <th
-              style={{
-                borderBottom: "1px solid #ccc",
-                textAlign: "left",
-                padding: "8px",
-              }}
-            >
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {sources.map((src) => (
-            <tr key={src.id}>
-              <td style={{ borderBottom: "1px solid #eee", padding: "8px" }}>
-                {src.name}
-              </td>
-              <td style={{ borderBottom: "1px solid #eee", padding: "8px" }}>
-                {src.type}
-              </td>
-              <td style={{ borderBottom: "1px solid #eee", padding: "8px" }}>
-                {src.type === "Azure Data Lake Storage"
-                  ? `Account: ${src.config.account_name}, Container: ${src.config.container}`
-                  : src.type === "local"
-                  ? `Path: ${src.config.path}`
-                  : "-"}
-              </td>
-              <td style={{ borderBottom: "1px solid #eee", padding: "8px" }}>
-                <button
-                  onClick={() => handleEditPage(src.id)}
-                  style={{ marginRight: 8 }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(src.id)}
-                  style={{ color: "red" }}
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Typography variant="h4">Data Sources</Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate("/datasource/new")}
+          >
+            Add New Data Source
+          </Button>
+        </Box>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Config</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {sources.map((src) => (
+                <TableRow key={src.id}>
+                  <TableCell>{src.name}</TableCell>
+                  <TableCell>{src.type}</TableCell>
+                  <TableCell>
+                    {src.type === "Azure Data Lake Storage"
+                      ? `Account: ${src.config.account_name}, Container: ${src.config.container}`
+                      : src.type === "local"
+                      ? `Path: ${src.config.path}`
+                      : "-"}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleEditPage(src.id)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => handleDelete(src.id)}
+                      >
+                        Delete
+                      </Button>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {sources.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} align="center">
+                    No data sources found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+    </Container>
   );
 }
 

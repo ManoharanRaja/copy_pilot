@@ -1,15 +1,29 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {
+  Container,
+  Typography,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Box,
+  Stack,
+} from "@mui/material";
 
 function Jobs() {
   const [jobs, setJobs] = useState([]);
   const [dataSources, setDataSources] = useState([]);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchJobs();
     fetchDataSources();
+    // eslint-disable-next-line
   }, []);
 
   const fetchJobs = async () => {
@@ -42,7 +56,7 @@ function Jobs() {
       localStorage.setItem("machineName", machineName);
     }
     // Redirect immediately
-    history.push(`/jobs/${id}/run-history?triggerRun=1`);
+    navigate(`/jobs/${id}/run-history?triggerRun=1`);
     // Fire and forget the run request
     axios.post(
       `/jobs/${id}/run`,
@@ -55,246 +69,251 @@ function Jobs() {
     );
   };
 
-  // Helper to render details vertically in a cell
-  const renderSourceDetails = (job) => (
-    <div>
-      <strong>Type:</strong> {job.sourceType}
-      <br />
-      {job.sourceType === "azure" && (
-        <>
-          <strong>Account:</strong> {getAzureAccountName(job.sourceAzureId)}
-          <br />
-        </>
-      )}
-      {job.sourceContainer && (
-        <>
-          <strong>Container:</strong> {job.sourceContainer}
-          <br />
-        </>
-      )}
-      <strong>Folder:</strong> {job.source}
-      <br />
-      {job.sourceFileMask && (
-        <>
-          <strong>File Mask:</strong> {job.sourceFileMask}
-          <br />
-        </>
-      )}
-    </div>
-  );
-
-  const renderTargetDetails = (job) => (
-    <div>
-      <strong>Type:</strong> {job.targetType}
-      <br />
-      {job.targetType === "azure" && (
-        <>
-          <strong>Account:</strong> {getAzureAccountName(job.targetAzureId)}
-          <br />
-        </>
-      )}
-      {job.targetContainer && (
-        <>
-          <strong>Container:</strong> {job.targetContainer}
-          <br />
-        </>
-      )}
-      <strong>Folder:</strong> {job.target}
-      <br />
-      {job.targetFileMask && (
-        <>
-          <strong>File Mask:</strong> {job.targetFileMask}
-          <br />
-        </>
-      )}
-    </div>
-  );
-
   return (
-    <div>
-      <div
-        style={{
+    <Box
+      sx={{
+        width: "100vw",
+        minHeight: "100vh",
+        bgcolor: "transparent",
+        px: 0,
+        py: 0,
+      }}
+    >
+      <Box
+        sx={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          mb: 4,
+          px: { xs: 2, md: 6 },
+          pt: 4,
         }}
       >
-        <h2>Copy Jobs</h2>
-        <button
-          onClick={() => history.push("/jobs/new")}
-          style={{ marginLeft: "auto" }}
+        <Typography variant="h4" sx={{ fontWeight: 700, letterSpacing: 1 }}>
+          Copy Jobs
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => navigate("/jobs/new")}
         >
           Add New Job
-        </button>
-      </div>
-      <table
-        border="1"
-        cellPadding="8"
-        cellSpacing="0"
-        style={{ width: "100%", borderCollapse: "collapse" }}
-      >
-        <thead>
-          <tr>
-            <th>Job Name</th>
-            <th>Job Details</th>
-            <th>Source</th>
-            <th>Target</th>
-            <th>Time Travel Run</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {jobs.map((job) => (
-            <tr key={job.id}>
-              <td>{job.name}</td>
-              <td>
-                <div>
-                  <b>Created By:</b> {job.created_by || "-"}
-                </div>
-                <div>
-                  <b>Created On:</b>{" "}
-                  {job.created_on
-                    ? new Date(job.created_on).toLocaleString()
-                    : "-"}
-                </div>
-                <div>
-                  <b>Last Updated By:</b> {job.updated_by || "-"}
-                </div>
-                <div>
-                  <b>Last Updated On:</b>{" "}
-                  {job.updated_on
-                    ? new Date(job.updated_on).toLocaleString()
-                    : "-"}
-                </div>
-                <div>
-                  <b>Last Run:</b>{" "}
-                  {job.latest_run_result ? (
-                    <span
-                      style={{
-                        color:
-                          job.latest_run_result.status === "Success"
-                            ? "green"
-                            : job.latest_run_result.status === "Failed"
-                            ? "red"
-                            : "orange",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Status: {job.latest_run_result.status}
-                    </span>
-                  ) : (
-                    <span style={{ color: "gray", fontWeight: "bold" }}>
-                      No runs
-                    </span>
-                  )}
-                  {job.latest_run_result && (
-                    <>
-                      <span>
-                        , Files Copied:{" "}
-                        {job.latest_run_result.copied_files_count}, At:{" "}
-                        {job.latest_run_result.timestamp
-                          ? new Date(
-                              job.latest_run_result.timestamp
-                            ).toLocaleString()
-                          : "-"}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </td>
-              <td>{renderSourceDetails(job)}</td>
-              <td>{renderTargetDetails(job)}</td>
-              <td>
-                {job.time_travel && job.time_travel.enabled ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                    }}
+        </Button>
+      </Box>
+      <TableContainer sx={{ px: { xs: 0, md: 6 } }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Job Name</TableCell>
+              <TableCell>Job Details</TableCell>
+              <TableCell>Source</TableCell>
+              <TableCell>Target</TableCell>
+              <TableCell>Time Travel Run</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {jobs.map((job) => (
+              <TableRow key={job.id} hover>
+                <TableCell sx={{ verticalAlign: "top", minWidth: 160 }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{ fontWeight: 700, mb: 1 }}
                   >
-                    <div style={{ fontWeight: "bold" }}>Enabled</div>
-                    <div>
-                      <span style={{ display: "block" }}>
+                    {job.name}
+                  </Typography>
+                </TableCell>
+                <TableCell sx={{ verticalAlign: "top", minWidth: 220 }}>
+                  <Stack spacing={1}>
+                    <Typography variant="body2">
+                      <b>Created By:</b> {job.created_by || "-"}
+                    </Typography>
+                    <Typography variant="body2">
+                      <b>Created On:</b>{" "}
+                      {job.created_on
+                        ? new Date(job.created_on).toLocaleString()
+                        : "-"}
+                    </Typography>
+                    <Typography variant="body2">
+                      <b>Last Updated By:</b> {job.updated_by || "-"}
+                    </Typography>
+                    <Typography variant="body2">
+                      <b>Last Updated On:</b>{" "}
+                      {job.updated_on
+                        ? new Date(job.updated_on).toLocaleString()
+                        : "-"}
+                    </Typography>
+                    <Typography variant="body2">
+                      <b>Last Run:</b>{" "}
+                      {job.latest_run_result ? (
+                        <span
+                          style={{
+                            color:
+                              job.latest_run_result.status === "Success"
+                                ? "green"
+                                : job.latest_run_result.status === "Failed"
+                                ? "red"
+                                : "orange",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          Status: {job.latest_run_result.status}
+                        </span>
+                      ) : (
+                        <span style={{ color: "gray", fontWeight: "bold" }}>
+                          No runs
+                        </span>
+                      )}
+                      {job.latest_run_result && (
+                        <>
+                          <span>
+                            , Files Copied:{" "}
+                            {job.latest_run_result.copied_files_count}, At:{" "}
+                            {job.latest_run_result.timestamp
+                              ? new Date(
+                                  job.latest_run_result.timestamp
+                                ).toLocaleString()
+                              : "-"}
+                          </span>
+                        </>
+                      )}
+                    </Typography>
+                  </Stack>
+                </TableCell>
+                <TableCell sx={{ verticalAlign: "top", minWidth: 180 }}>
+                  <Stack spacing={1}>
+                    <Typography variant="body2">
+                      <b>Type:</b> {job.sourceType}
+                    </Typography>
+                    {job.sourceType === "azure" && (
+                      <Typography variant="body2">
+                        <b>Account:</b> {getAzureAccountName(job.sourceAzureId)}
+                      </Typography>
+                    )}
+                    {job.sourceContainer && (
+                      <Typography variant="body2">
+                        <b>Container:</b> {job.sourceContainer}
+                      </Typography>
+                    )}
+                    <Typography variant="body2">
+                      <b>Folder:</b> {job.source}
+                    </Typography>
+                    {job.sourceFileMask && (
+                      <Typography variant="body2">
+                        <b>File Mask:</b> {job.sourceFileMask}
+                      </Typography>
+                    )}
+                  </Stack>
+                </TableCell>
+                <TableCell sx={{ verticalAlign: "top", minWidth: 180 }}>
+                  <Stack spacing={1}>
+                    <Typography variant="body2">
+                      <b>Type:</b> {job.targetType}
+                    </Typography>
+                    {job.targetType === "azure" && (
+                      <Typography variant="body2">
+                        <b>Account:</b> {getAzureAccountName(job.targetAzureId)}
+                      </Typography>
+                    )}
+                    {job.targetContainer && (
+                      <Typography variant="body2">
+                        <b>Container:</b> {job.targetContainer}
+                      </Typography>
+                    )}
+                    <Typography variant="body2">
+                      <b>Folder:</b> {job.target}
+                    </Typography>
+                    {job.targetFileMask && (
+                      <Typography variant="body2">
+                        <b>File Mask:</b> {job.targetFileMask}
+                      </Typography>
+                    )}
+                  </Stack>
+                </TableCell>
+                <TableCell sx={{ verticalAlign: "top", minWidth: 120 }}>
+                  {job.time_travel && job.time_travel.enabled ? (
+                    <Stack spacing={1}>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        Enabled
+                      </Typography>
+                      <Typography variant="body2">
                         From: {job.time_travel.from_date || "-"}
-                      </span>
-                      <span style={{ display: "block" }}>
+                      </Typography>
+                      <Typography variant="body2">
                         To: {job.time_travel.to_date || "-"}
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <span>Disabled</span>
-                )}
-              </td>
-              <td>
-                {/* First row: Edit, Delete, Run, Clone */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 4,
-                    width: "100%",
-                    gap: 0,
-                  }}
-                >
-                  <button
-                    style={{ flex: 1, margin: "0 4px" }}
-                    onClick={() => history.push(`/jobs/${job.id}/edit`)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    style={{ flex: 1, margin: "0 4px" }}
-                    onClick={() => handleDelete(job.id)}
-                  >
-                    Delete
-                  </button>
-                  <button
-                    style={{ flex: 1, margin: "0 4px" }}
-                    onClick={() => handleRun(job.id)}
-                  >
-                    Run
-                  </button>
-                  <button
-                    style={{ flex: 1, margin: "0 4px" }}
-                    onClick={() => history.push(`/jobs/${job.id}/clone`)}
-                  >
-                    Clone
-                  </button>
-                </div>
-                {/* Second row: View run history, Define Job Variables */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    width: "100%",
-                    gap: 0,
-                  }}
-                >
-                  <button
-                    style={{ flex: 1, margin: "0 4px" }}
-                    onClick={() => history.push(`/jobs/${job.id}/run-history`)}
-                  >
-                    View run history
-                  </button>
-                  <button
-                    style={{ flex: 1, margin: "0 4px" }}
-                    onClick={() =>
-                      history.push(`/jobs/${job.id}/local-variables`)
-                    }
-                  >
-                    Define Job Variables
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                      </Typography>
+                    </Stack>
+                  ) : (
+                    <Typography variant="body2">Disabled</Typography>
+                  )}
+                </TableCell>
+                <TableCell sx={{ verticalAlign: "top", minWidth: 180 }}>
+                  <Stack direction="column" spacing={1}>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate(`/jobs/${job.id}/edit`)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        onClick={() => handleDelete(job.id)}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="success"
+                        onClick={() => handleRun(job.id)}
+                      >
+                        Run
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate(`/jobs/${job.id}/clone`)}
+                      >
+                        Clone
+                      </Button>
+                    </Stack>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => navigate(`/jobs/${job.id}/run-history`)}
+                      >
+                        View run history
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() =>
+                          navigate(`/jobs/${job.id}/local-variables`)
+                        }
+                      >
+                        Define Job Variables
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))}
+            {jobs.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  No jobs found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 }
 

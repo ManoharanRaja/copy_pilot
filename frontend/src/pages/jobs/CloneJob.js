@@ -1,14 +1,26 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { validateJob } from "../../utils/jobValidation";
+import {
+  Container,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Box,
+  Stack,
+  Alert,
+  CircularProgress,
+} from "@mui/material";
 
 function CloneJob() {
   const { id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
   const [form, setForm] = useState(null);
   const [errors, setErrors] = useState({});
   const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     axios.get("/jobs").then((res) => {
@@ -22,6 +34,7 @@ function CloneJob() {
           name: `Copy of ${name}`,
         });
       }
+      setLoading(false);
     });
   }, [id]);
 
@@ -51,7 +64,7 @@ function CloneJob() {
 
     try {
       await axios.post("/jobs", form);
-      history.push("/jobs");
+      navigate("/jobs");
     } catch (error) {
       const detail =
         error.response?.data?.detail ||
@@ -62,40 +75,60 @@ function CloneJob() {
     }
   };
 
-  if (!form) return <div>Loading...</div>;
+  if (loading || !form)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
+        <CircularProgress />
+      </Box>
+    );
 
   return (
-    <div>
-      <h2>Clone Job</h2>
-      <form onSubmit={handleSubmit}>
-        {/* Reuse your job form fields here, similar to NewJob.js */}
-        <label>
-          Job Name
-          <input
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Clone Job
+        </Typography>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
+        >
+          <TextField
+            label="Job Name"
             name="name"
             placeholder="Job Name"
             value={form.name}
             onChange={handleChange}
             required
-            style={errors.name ? { borderColor: "red" } : {}}
+            error={!!errors.name}
+            helperText={errors.name}
           />
-          {errors.name && (
-            <span style={{ color: "red", fontSize: "12px" }}>
-              {errors.name}
-            </span>
-          )}
-        </label>
-        {/* ...repeat for other fields as in NewJob.js... */}
-        <button type="submit">Save Cloned Job</button>
-        <button
-          type="button"
-          onClick={() => history.push("/jobs")}
-          style={{ marginLeft: "10px" }}
-        >
-          Cancel
-        </button>
-      </form>
-    </div>
+          {/* Add other job fields here as in NewJob.js, e.g. source, target, etc. */}
+          {/* Example: */}
+          {/* <TextField
+            label="Source"
+            name="source"
+            value={form.source}
+            onChange={handleChange}
+            required
+          /> */}
+          {/* ...repeat for other fields... */}
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+            <Button type="submit" variant="contained" color="primary">
+              Save Cloned Job
+            </Button>
+            <Button
+              type="button"
+              variant="outlined"
+              color="secondary"
+              onClick={() => navigate("/jobs")}
+            >
+              Cancel
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
+    </Container>
   );
 }
 
