@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
-  Container,
-  Paper,
   Typography,
   TextField,
   Button,
@@ -123,120 +121,128 @@ function NewDataSource() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Add New Data Source
-        </Typography>
-        {!selectedType ? (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle1" gutterBottom>
-              Select Data Source Type
-            </Typography>
-            <Button
-              variant="contained"
-              onClick={() => handleTypeSelect("Azure Data Lake Storage")}
-            >
-              Azure Data Lake Storage
-            </Button>
-          </Box>
-        ) : (
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              mt: 2,
-            }}
+    <Box
+      sx={{
+        width: "100vw",
+        minHeight: "100vh",
+        bgcolor: "transparent",
+        px: { xs: 2, md: 6 },
+        py: 4,
+      }}
+    >
+      <Typography variant="h5" gutterBottom>
+        Add New Data Source
+      </Typography>
+      {!selectedType ? (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Select Data Source Type
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => handleTypeSelect("Azure Data Lake Storage")}
           >
-            <TextField
-              label="Name"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              error={!!errors.name}
-              helperText={errors.name}
-            />
-            <TextField
-              label="Account Name"
-              name="account_name"
-              value={form.account_name}
-              onChange={handleChange}
-              required
-              error={!!errors.account_name}
-              helperText={
-                errors.account_name ||
-                `https://${
-                  form.account_name || "{account_name}"
-                }.dfs.core.windows.net/`
-              }
-            />
-            <TextField
-              label="Account Key"
-              name="account_key"
-              type="password"
-              value={form.account_key}
-              onChange={handleChange}
-              required
-              error={!!errors.account_key}
-              helperText={errors.account_key}
-            />
-            <TextField
-              label="Container (Optional)"
-              name="container"
-              value={form.container}
-              onChange={handleChange}
-            />
-            <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={handleTest}
-                disabled={testing}
-              >
-                {testing ? (
-                  <>
-                    <CircularProgress size={18} sx={{ mr: 1 }} />
-                    Testing...
-                  </>
-                ) : (
-                  "Test"
-                )}
-              </Button>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={testStatus !== "success"}
-              >
-                Add
-              </Button>
-              <Button
-                type="button"
-                variant="outlined"
-                color="secondary"
-                onClick={() => setSelectedType("")}
-              >
-                Back
-              </Button>
-            </Stack>
-            {testStatus === "success" && (
-              <Alert severity="success" sx={{ mt: 2 }}>
-                Connection successful!
-              </Alert>
-            )}
-            {testStatus === "fail" && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {testError}
-              </Alert>
-            )}
-          </Box>
-        )}
-      </Paper>
-    </Container>
+            Azure Data Lake Storage
+          </Button>
+        </Box>
+      ) : (
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            mt: 2,
+            maxWidth: 500,
+          }}
+        >
+          {/* ...fields and buttons as before... */}
+          <TextField
+            label="Name"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            error={!!errors.name}
+            helperText={errors.name}
+          />
+          <TextField
+            label="Account Name"
+            name="account_name"
+            value={form.account_name}
+            onChange={handleChange}
+            required
+            error={!!errors.account_name}
+            helperText={
+              errors.account_name ||
+              `https://${
+                form.account_name || "{account_name}"
+              }.dfs.core.windows.net/`
+            }
+          />
+          <TextField
+            label="Account Key"
+            name="account_key"
+            type="password"
+            value={form.account_key}
+            onChange={handleChange}
+            required
+            error={!!errors.account_key}
+            helperText={errors.account_key}
+          />
+          <TextField
+            label="Container (Optional)"
+            name="container"
+            value={form.container}
+            onChange={handleChange}
+          />
+          <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={handleTest}
+              disabled={testing}
+            >
+              {testing ? (
+                <>
+                  <CircularProgress size={18} sx={{ mr: 1 }} />
+                  Testing...
+                </>
+              ) : (
+                "Test"
+              )}
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={testStatus !== "success"}
+            >
+              Add
+            </Button>
+            <Button
+              type="button"
+              variant="outlined"
+              color="secondary"
+              onClick={() => setSelectedType("")}
+            >
+              Back
+            </Button>
+          </Stack>
+          {testStatus === "success" && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              Connection successful!
+            </Alert>
+          )}
+          {testStatus === "fail" && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {testError}
+            </Alert>
+          )}
+        </Box>
+      )}
+    </Box>
   );
 }
 
