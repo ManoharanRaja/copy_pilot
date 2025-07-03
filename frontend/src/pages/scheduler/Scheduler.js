@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
-  Container,
-  Paper,
   Typography,
   Button,
   Table,
@@ -14,6 +12,7 @@ import {
   TableRow,
   Stack,
   Chip,
+  Box,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -50,166 +49,168 @@ function Scheduler() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          mb={2}
+    <Box
+      sx={{
+        width: "100vw",
+        minHeight: "100vh",
+        bgcolor: "transparent",
+        px: { xs: 2, md: 6 },
+        py: 4,
+      }}
+    >
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={2}
+      >
+        <Typography variant="h4" fontWeight={700}>
+          Scheduler
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate("/scheduler/new")}
+          sx={{ fontWeight: 600 }}
         >
-          <Typography variant="h4" fontWeight={700}>
-            Scheduler
-          </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => navigate("/scheduler/new")}
-            sx={{ fontWeight: 600 }}
-          >
-            Add New Scheduler
-          </Button>
-        </Stack>
-        <TableContainer component={Paper} elevation={0}>
-          <Table>
-            <TableHead>
+          Add New Scheduler
+        </Button>
+      </Stack>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Scheduler Name</TableCell>
+              <TableCell>Job Name</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Schedule</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {schedules.length === 0 && (
               <TableRow>
-                <TableCell>Scheduler Name</TableCell>
-                <TableCell>Job Name</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Schedule</TableCell>
-                <TableCell>Actions</TableCell>
+                <TableCell colSpan={5} align="center">
+                  No schedules yet.
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {schedules.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    No schedules yet.
+            )}
+            {schedules.map((sch) => {
+              const job = jobs.find((j) => String(j.id) === String(sch.jobId));
+              return (
+                <TableRow key={sch.id}>
+                  <TableCell>{sch.name}</TableCell>
+                  <TableCell>{job ? job.name : <i>Job not found</i>}</TableCell>
+                  <TableCell>
+                    {sch.paused ? (
+                      <Chip label="Paused" color="warning" />
+                    ) : (
+                      <Chip label="Active" color="success" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {sch.customScheduler ? (
+                      <>
+                        <b>
+                          {(() => {
+                            const { type, x, y } = sch.customScheduler;
+                            const ordX = ordinal(x);
+                            switch (type) {
+                              case "business_day_month":
+                                return `${ordX} Business Day of the month`;
+                              case "day_month":
+                                return `${ordX} Day of the month`;
+                              case "business_day_quarter":
+                                return `${ordX} Business Day of Quarter ${y}`;
+                              case "day_quarter":
+                                return `${ordX} Day of Quarter ${y}`;
+                              case "business_day_halfyear":
+                                return `${ordX} Business Day of Half yearly ${y}`;
+                              case "day_halfyear":
+                                return `${ordX} Day of Half yearly ${y}`;
+                              case "business_day_annually":
+                                return `${ordX} Business Day of annually ${y}`;
+                              case "day_annually":
+                                return `${ordX} Day of annually ${y}`;
+                              default:
+                                return "-";
+                            }
+                          })()}
+                        </b>
+                        <br />
+                      </>
+                    ) : sch.weekdays && sch.weekdays.length > 0 ? (
+                      sch.weekdays.join(", ")
+                    ) : (
+                      "—"
+                    )}
+                    <br />
+                    <b>Time:</b> {sch.time || "—"}
+                    <br />
+                    <b>Timezone:</b> {sch.timezone || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      {sch.paused ? (
+                        <Button
+                          size="small"
+                          color="success"
+                          startIcon={<PlayArrowIcon />}
+                          onClick={async () => {
+                            await axios.post(`/schedules/${sch.id}/resume`);
+                            fetchSchedules();
+                          }}
+                        >
+                          Resume
+                        </Button>
+                      ) : (
+                        <Button
+                          size="small"
+                          color="warning"
+                          startIcon={<PauseIcon />}
+                          onClick={async () => {
+                            await axios.post(`/schedules/${sch.id}/pause`);
+                            fetchSchedules();
+                          }}
+                        >
+                          Pause
+                        </Button>
+                      )}
+                      <Button
+                        size="small"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => handleDelete(sch.id)}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        size="small"
+                        color="primary"
+                        startIcon={<EditIcon />}
+                        onClick={() => navigate(`/scheduler/edit/${sch.id}`)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        color="secondary"
+                        startIcon={<HistoryIcon />}
+                        onClick={() =>
+                          navigate(`/jobs/${sch.jobId}/run-history`)
+                        }
+                      >
+                        Run History
+                      </Button>
+                    </Stack>
                   </TableCell>
                 </TableRow>
-              )}
-              {schedules.map((sch) => {
-                const job = jobs.find(
-                  (j) => String(j.id) === String(sch.jobId)
-                );
-                return (
-                  <TableRow key={sch.id}>
-                    <TableCell>{sch.name}</TableCell>
-                    <TableCell>
-                      {job ? job.name : <i>Job not found</i>}
-                    </TableCell>
-                    <TableCell>
-                      {sch.paused ? (
-                        <Chip label="Paused" color="warning" />
-                      ) : (
-                        <Chip label="Active" color="success" />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {sch.customScheduler ? (
-                        <>
-                          <b>
-                            {(() => {
-                              const { type, x, y } = sch.customScheduler;
-                              const ordX = ordinal(x);
-                              switch (type) {
-                                case "business_day_month":
-                                  return `${ordX} Business Day of the month`;
-                                case "day_month":
-                                  return `${ordX} Day of the month`;
-                                case "business_day_quarter":
-                                  return `${ordX} Business Day of Quarter ${y}`;
-                                case "day_quarter":
-                                  return `${ordX} Day of Quarter ${y}`;
-                                case "business_day_halfyear":
-                                  return `${ordX} Business Day of Half yearly ${y}`;
-                                case "day_halfyear":
-                                  return `${ordX} Day of Half yearly ${y}`;
-                                case "business_day_annually":
-                                  return `${ordX} Business Day of annually ${y}`;
-                                case "day_annually":
-                                  return `${ordX} Day of annually ${y}`;
-                                default:
-                                  return "-";
-                              }
-                            })()}
-                          </b>
-                          <br />
-                        </>
-                      ) : sch.weekdays && sch.weekdays.length > 0 ? (
-                        sch.weekdays.join(", ")
-                      ) : (
-                        "—"
-                      )}
-                      <br />
-                      <b>Time:</b> {sch.time || "—"}
-                      <br />
-                      <b>Timezone:</b> {sch.timezone || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Stack direction="row" spacing={1}>
-                        {sch.paused ? (
-                          <Button
-                            size="small"
-                            color="success"
-                            startIcon={<PlayArrowIcon />}
-                            onClick={async () => {
-                              await axios.post(`/schedules/${sch.id}/resume`);
-                              fetchSchedules();
-                            }}
-                          >
-                            Resume
-                          </Button>
-                        ) : (
-                          <Button
-                            size="small"
-                            color="warning"
-                            startIcon={<PauseIcon />}
-                            onClick={async () => {
-                              await axios.post(`/schedules/${sch.id}/pause`);
-                              fetchSchedules();
-                            }}
-                          >
-                            Pause
-                          </Button>
-                        )}
-                        <Button
-                          size="small"
-                          color="error"
-                          startIcon={<DeleteIcon />}
-                          onClick={() => handleDelete(sch.id)}
-                        >
-                          Delete
-                        </Button>
-                        <Button
-                          size="small"
-                          color="primary"
-                          startIcon={<EditIcon />}
-                          onClick={() => navigate(`/scheduler/edit/${sch.id}`)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="small"
-                          color="secondary"
-                          startIcon={<HistoryIcon />}
-                          onClick={() =>
-                            navigate(`/jobs/${sch.jobId}/run-history`)
-                          }
-                        >
-                          Run History
-                        </Button>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-    </Container>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 }
 
