@@ -62,8 +62,22 @@ function Dashboard() {
               textDecoration: "none",
               boxShadow: "0 1px 6px #e0e7ff33",
               transition: "background 0.2s, color 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
             }}
           >
+            <img
+              src="/datasource.png"
+              alt="Data Source"
+              style={{
+                width: 56,
+                height: 56,
+                marginRight: 8,
+                objectFit: "contain",
+              }}
+            />
             Data Source
           </Link>
           <Link
@@ -79,8 +93,22 @@ function Dashboard() {
               textDecoration: "none",
               boxShadow: "0 1px 6px #e0e7ff33",
               transition: "background 0.2s, color 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
             }}
           >
+            <img
+              src="/copyjobs.png"
+              alt="Copy Jobs"
+              style={{
+                width: 56,
+                height: 56,
+                marginRight: 8,
+                objectFit: "contain",
+              }}
+            />
             Copy Jobs
           </Link>
           <Link
@@ -96,8 +124,22 @@ function Dashboard() {
               textDecoration: "none",
               boxShadow: "0 1px 6px #e0e7ff33",
               transition: "background 0.2s, color 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
             }}
           >
+            <img
+              src="/scheduler.png"
+              alt="Scheduler"
+              style={{
+                width: 56,
+                height: 56,
+                marginRight: 8,
+                objectFit: "contain",
+              }}
+            />
             Scheduler
           </Link>
           <Link
@@ -113,8 +155,22 @@ function Dashboard() {
               textDecoration: "none",
               boxShadow: "0 1px 6px #e0e7ff33",
               transition: "background 0.2s, color 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
             }}
           >
+            <img
+              src="/globalvars.png"
+              alt="Global Variables"
+              style={{
+                width: 56,
+                height: 56,
+                marginRight: 8,
+                objectFit: "contain",
+              }}
+            />
             Global Variables
           </Link>
         </div>
