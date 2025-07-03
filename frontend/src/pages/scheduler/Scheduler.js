@@ -64,9 +64,16 @@ function Scheduler() {
         justifyContent="space-between"
         mb={2}
       >
-        <Typography variant="h4" fontWeight={700}>
-          Scheduler
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src="/scheduler.png"
+            alt="Scheduler"
+            style={{ width: 80, height: 80, marginRight: 12 }} // doubled from 40 to 80
+          />
+          <Typography variant="h4" fontWeight={700}>
+            Scheduler
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

@@ -89,9 +89,17 @@ function Jobs() {
           pt: 4,
         }}
       >
-        <Typography variant="h4" sx={{ fontWeight: 700, letterSpacing: 1 }}>
-          Copy Jobs
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src="/copyjobs.png"
+            alt="Copy Jobs"
+            style={{ width: 80, height: 80, marginRight: 12 }} // doubled from 40 to 80
+          />
+          <Typography variant="h4" sx={{ fontWeight: 700, letterSpacing: 1 }}>
+            Copy Jobs
+          </Typography>
+        </Box>
+
         <Button
           variant="contained"
           color="primary"

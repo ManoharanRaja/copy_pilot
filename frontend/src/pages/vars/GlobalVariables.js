@@ -188,9 +188,17 @@ function GlobalVariables() {
         justifyContent="space-between"
         mb={2}
       >
-        <Typography variant="h5" fontWeight={700}>
-          Global Variables
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src="/globalvars.png"
+            alt="Global Variables"
+            style={{ width: 80, height: 80, marginRight: 12 }} // doubled from 40 to 80
+          />
+          <Typography variant="h5" fontWeight={700}>
+            Global Variables
+          </Typography>
+        </Box>
+
         <Button
           onClick={handleRefreshAll}
           disabled={refreshingAll}

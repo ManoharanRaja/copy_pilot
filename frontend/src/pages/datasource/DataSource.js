@@ -56,7 +56,14 @@ function DataSource() {
           mb: 3,
         }}
       >
-        <Typography variant="h4">Data Sources</Typography>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src="/datasource.png"
+            alt="Data Source"
+            style={{ width: 80, height: 80, marginRight: 12 }}
+          />
+          <Typography variant="h4">Data Sources</Typography>
+        </Box>
         <Button
           variant="contained"
           color="primary"
