@@ -1,5 +1,6 @@
 import json
 import os
+from filelock import FileLock
 
 FILE = "backend/data/global_variables.json"
 
@@ -10,5 +11,6 @@ def load_global_variables():
         return json.load(f)
 
 def save_global_variables(vars):
-    with open(FILE, "w") as f:
-        json.dump(vars, f, indent=2)
+    with FileLock(FILE + ".lock"):
+        with open(FILE, "w") as f:
+            json.dump(vars, f, indent=2)

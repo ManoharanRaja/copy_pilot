@@ -1,7 +1,6 @@
 import os
 import fnmatch
 import shutil
-import logging
 from azure.core.exceptions import AzureError
 from backend.utils.azure_utils import get_adl_service_client
 from backend.utils.crypto import decrypt
@@ -24,16 +23,21 @@ def copy_local_to_local(source, target, file_mask, _=None):
             os.makedirs(target)
         all_files = [f for f in os.listdir(source) if os.path.isfile(os.path.join(source, f))]
         source_files = [os.path.join(source, f) for f in fnmatch.filter(all_files, file_mask)]
+        if not source_files:
+            raise Exception(f"No files matching '{file_mask}' found in folder '{source}'.")
         copied_files = []
         for src_file in source_files:
             filename = os.path.basename(src_file)
             dst_file = os.path.join(target, filename)
+            if not os.path.exists(src_file):
+                raise FileNotFoundError(f"File '{src_file}' does not exist in source folder '{source}'.")
             shutil.copy2(src_file, dst_file)
             copied_files.append(dst_file)
         return copied_files, source_files
+    except FileNotFoundError as fnf:
+        raise FileNotFoundError(str(fnf))
     except Exception as e:
-        logging.error(f"Local to Local copy failed: {e}")
-        raise
+        raise Exception(str(e))
 
 def copy_local_to_azure(source, target, file_mask, azure_config):
     """
@@ -59,23 +63,26 @@ def copy_local_to_azure(source, target, file_mask, azure_config):
             raise FileNotFoundError(f"Source folder '{source}' does not exist.")
         all_files = [f for f in os.listdir(source) if os.path.isfile(os.path.join(source, f))]
         source_files = [os.path.join(source, f) for f in fnmatch.filter(all_files, file_mask)]
-
+        if not source_files:
+            raise Exception(f"No files matching '{file_mask}' found in folder '{source}'.")
         copied_files = []
         for src_file in source_files:
             filename = os.path.basename(src_file)
             azure_path = f"{directory}/{filename}" if directory else filename
+            if not os.path.exists(src_file):
+                raise FileNotFoundError(f"File '{src_file}' does not exist in source folder '{source}'.")
             file_client = file_system_client.get_file_client(azure_path)
             with open(src_file, "rb") as data:
                 file_client.upload_data(data, overwrite=True)
             copied_files.append(f"https://{account_name}.blob.core.windows.net/{filesystem}/{azure_path}")
 
         return copied_files, source_files
+    except FileNotFoundError as fnf:
+        raise FileNotFoundError(str(fnf))
     except AzureError as ae:
-        logging.error(f"Local to Azure copy failed (AzureError): {ae}")
-        raise
+        raise Exception(f"Local to Azure copy failed (AzureError): {ae}")
     except Exception as e:
-        logging.error(f"Local to Azure copy failed: {e}")
-        raise
+        raise Exception(str(e))
 
 def copy_azure_to_local(source, target, file_mask, azure_config):
     try:
@@ -95,6 +102,8 @@ def copy_azure_to_local(source, target, file_mask, azure_config):
                     source_files.append(path.name)
         if not os.path.exists(target):
             os.makedirs(target)
+        if not source_files:
+            raise Exception(f"No files matching '{file_mask}' found in Azure directory '{directory}'.")
         copied_files = []
         for file_path in source_files:
             file_client = file_system_client.get_file_client(file_path)
@@ -105,12 +114,12 @@ def copy_azure_to_local(source, target, file_mask, azure_config):
                 f.write(file_content)
             copied_files.append(local_filename)
         return copied_files, [f"https://{account_name}.blob.core.windows.net/{filesystem}/{f}" for f in source_files]
+    except FileNotFoundError as fnf:
+        raise FileNotFoundError(str(fnf))
     except AzureError as ae:
-        logging.error(f"Azure to Local copy failed (AzureError): {ae}")
-        raise
+        raise Exception(f"Azure to Local copy failed (AzureError): {ae}")
     except Exception as e:
-        logging.error(f"Azure to Local copy failed: {e}")
-        raise
+        raise Exception(str(e))
 
 def copy_azure_to_azure(source, target, file_mask, configs):
     """
@@ -148,7 +157,8 @@ def copy_azure_to_azure(source, target, file_mask, configs):
                 filename = os.path.basename(path.name)
                 if fnmatch.fnmatch(filename, file_mask):
                     source_files.append(path.name)
-
+        if not source_files:
+            raise Exception(f"No files matching '{file_mask}' found in Azure directory '{src_directory}'.")
         copied_files = []
         for file_path in source_files:
             src_file_client = src_fs_client.get_file_client(file_path)
@@ -162,11 +172,9 @@ def copy_azure_to_azure(source, target, file_mask, configs):
 
         return copied_files, [f"https://{src_account_name}.blob.core.windows.net/{src_filesystem}/{f}" for f in source_files]
     except AzureError as ae:
-        logging.error(f"Azure to Azure copy failed (AzureError): {ae}")
-        raise
+        raise Exception(f"Azure to Azure copy failed (AzureError): {ae}")
     except Exception as e:
-        logging.error(f"Azure to Azure copy failed: {e}")
-        raise
+        raise Exception(str(e))
     
 def copy_smb_to_smb(source, target, file_mask, smb_config=None):
     try:
@@ -176,32 +184,34 @@ def copy_smb_to_smb(source, target, file_mask, smb_config=None):
             os.makedirs(target)
         all_files = [f for f in os.listdir(source) if os.path.isfile(os.path.join(source, f))]
         source_files = [os.path.join(source, f) for f in fnmatch.filter(all_files, file_mask)]
+        if not source_files:
+            raise Exception(f"No files matching '{file_mask}' found in SMB folder '{source}'.")
         copied_files = []
         for src_file in source_files:
             filename = os.path.basename(src_file)
             dst_file = os.path.join(target, filename)
+            if not os.path.exists(src_file):
+                raise FileNotFoundError(f"File '{src_file}' does not exist in source SMB folder '{source}'.")
             shutil.copy2(src_file, dst_file)
             copied_files.append(dst_file)
         return copied_files, source_files
+    except FileNotFoundError as fnf:
+        raise FileNotFoundError(str(fnf))
     except Exception as e:
-        logging.error(f"SMB to SMB copy failed: {e}")
-        raise
+        raise Exception(str(e))
 
 def copy_local_to_smb(source, target, file_mask, smb_config=None):
     # Same as local to local, just target is a share path
     return copy_local_to_local(source, target, file_mask)
 
-# --- SMB/Share to Local ---
 def copy_smb_to_local(source, target, file_mask, smb_config=None):
     # Same as local to local, just source is a share path
     return copy_local_to_local(source, target, file_mask)
 
-# --- SMB/Share to Azure ---
 def copy_smb_to_azure(source, target, file_mask, azure_config):
     # Same as local to azure, just source is a share path
     return copy_local_to_azure(source, target, file_mask, azure_config)
 
-# --- Azure to SMB/Share ---
 def copy_azure_to_smb(source, target, file_mask, azure_config):
     # Same as azure to local, just target is a share path
     return copy_azure_to_local(source, target, file_mask, azure_config)
@@ -209,13 +219,13 @@ def copy_azure_to_smb(source, target, file_mask, azure_config):
 COPY_FUNCTIONS = {
     ("local", "local"): copy_local_to_local,
     ("local", "azure"): copy_local_to_azure,
-    ("local", "smb"): copy_local_to_smb,
+    ("local", "shared"): copy_local_to_smb,
     ("azure", "local"): copy_azure_to_local,
     ("azure", "azure"): copy_azure_to_azure,
-    ("azure", "smb"): copy_azure_to_smb,
-    ("smb", "local"): copy_smb_to_local,
-    ("smb", "azure"): copy_smb_to_azure,
-    ("smb", "smb"): copy_smb_to_smb,
+    ("azure", "shared"): copy_azure_to_smb,
+    ("shared", "local"): copy_smb_to_local,
+    ("shared", "azure"): copy_smb_to_azure,
+    ("shared", "shared"): copy_smb_to_smb,
 }
 
 def dispatch_copy(job):

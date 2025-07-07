@@ -1,0 +1,46 @@
++-------------------+         HTTP         +-------------------+         File I/O         +---------------------+
+|                   | <------------------> |                   | <---------------------> |                     |
+|   Frontend (UI)   |                     |    Backend API     |                       |     JSON Files      |
+|   React App       |                     |   FastAPI (Python) |                       | (data, jobs, etc.)  |
+|                   |                     |                   |                       |                     |
++-------------------+                     +-------------------+                       +---------------------+
+
+
+
+2.draw.io XML
+
+<mxfile host="app.diagrams.net">
+  <diagram name="Copy Pilot Architecture" id="copy-pilot-arch">
+    <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="2" value="Frontend (React UI): Jobs, Data Sources, Scheduler, Variables, Run History" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="60" y="120" width="220" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="3" value="Backend (FastAPI, Python): API Routers, Services (Copy, Scheduler, Variable Refresher), Storage (JSON + FileLock), Utilities (Encryption, Azure/SMB)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="340" y="100" width="260" height="140" as="geometry"/>
+        </mxCell>
+        <mxCell id="4" value="JSON Files (Data Storage): data_sources.json, job_details.json, global_variables.json, schedules.json, run_history/*.json" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="660" y="120" width="220" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#6c8ebf;" edge="1" parent="1" source="2" target="3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="280" y="170" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeColor=#9673a6;" edge="1" parent="1" source="3" target="4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="600" y="170" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7" value="HTTP (REST API)" style="text;html=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="290" y="140" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="8" value="File I/O (with FileLock)" style="text;html=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="610" y="140" width="80" height="20" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
