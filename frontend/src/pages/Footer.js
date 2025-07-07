@@ -1,25 +1,36 @@
 import React from "react";
+import { Box, Typography, Link as MuiLink } from "@mui/material";
 
 function Footer() {
   return (
-    <footer
-      style={{
-        marginTop: 40,
-        padding: "16px 0",
-        background: "#f8f8f8",
+    <Box
+      component="footer"
+      sx={{
+        mt: 0, // No margin top
+        py: 3,
+        background: "linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%)",
         textAlign: "center",
         fontSize: 14,
-        color: "#888",
-        borderTop: "1px solid #eee",
+        color: "#64748b",
+        borderTop: "none",
+        boxShadow: "none", // Remove shadow
       }}
     >
-      © {new Date().getFullYear()} Developed by the Automation Team.
-      <br />
-      For support, contact:{" "}
-      <a href="mailto:automation-team@example.com">
-        automation-team@example.com
-      </a>
-    </footer>
+      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+        © {new Date().getFullYear()} Developed by the Automation Team.
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 0.5 }}>
+        For support, contact:{" "}
+        <MuiLink
+          href="mailto:automation-team@example.com"
+          underline="hover"
+          color="inherit"
+          sx={{ fontWeight: 500 }}
+        >
+          automation-team@example.com
+        </MuiLink>
+      </Typography>
+    </Box>
   );
 }
 

@@ -1,6 +1,23 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {
+  Container,
+  Paper,
+  Typography,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Checkbox,
+  FormGroup,
+  FormControlLabel,
+  Stack,
+  Alert,
+  Box,
+} from "@mui/material";
 
 const getMaxX = (customType) => {
   switch (customType) {
@@ -53,7 +70,6 @@ const TIMEZONES = [
   "Europe/London",
   "Asia/Singapore",
   "Australia/Sydney",
-  // ...add more as needed
 ];
 
 function NewScheduler() {
@@ -70,7 +86,7 @@ function NewScheduler() {
   const [customX, setCustomX] = useState("");
   const [customY, setCustomY] = useState("");
   const [error, setError] = useState("");
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     axios.get("/jobs").then((res) => setJobs(res.data || []));
@@ -126,7 +142,6 @@ function NewScheduler() {
           setError(`x must be between 1 and ${maxX} for the selected type.`);
           return;
         }
-        // y validation for types that require y
         if (
           ["business_day_quarter", "day_quarter"].includes(customType) &&
           (isNaN(y) || y < 1 || y > 4)
@@ -148,7 +163,6 @@ function NewScheduler() {
           setError("Annually (y) must be 1.");
           return;
         }
-        // Save custom scheduler
         await axios.post("/schedules", {
           ...form,
           weekdays: [],
@@ -158,16 +172,15 @@ function NewScheduler() {
             y: y || null,
           },
         });
-        history.push("/scheduler");
+        navigate("/scheduler");
         return;
       }
       if (form.weekdays.length === 0) {
         setError("Please select at least one weekday.");
         return;
       }
-      // Save normal scheduler
       await axios.post("/schedules", form);
-      history.push("/scheduler");
+      navigate("/scheduler");
     } catch (err) {
       if (
         err.response &&
@@ -182,198 +195,185 @@ function NewScheduler() {
   };
 
   return (
-    <div>
-      <h2>Add New Scheduler</h2>
-      <form onSubmit={handleSubmit} style={{ maxWidth: 400 }}>
-        <label>
-          Scheduler Name
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            required
-            style={{ display: "block", marginBottom: 4, width: "100%" }}
-            maxLength={100}
-          />
-          {error && error.toLowerCase().includes("name") && (
-            <div style={{ color: "red", marginBottom: 12 }}>{error}</div>
-          )}
-        </label>
-        <label>
-          Job
-          <select
-            name="jobId"
-            value={form.jobId}
-            onChange={handleChange}
-            required
-            style={{ display: "block", marginBottom: 16, width: "100%" }}
-          >
-            <option value="">Select Job</option>
-            {jobs.map((job) => (
-              <option key={job.id} value={job.id}>
-                {job.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Days of Week
-          <div
-            style={{
-              marginBottom: 16,
-              opacity: isCustom ? 0.5 : 1,
-              pointerEvents: isCustom ? "none" : "auto",
-            }}
-          >
-            {WEEKDAYS.map((day) => (
-              <label key={day.value} style={{ marginRight: 10 }}>
-                <input
-                  type="checkbox"
-                  checked={form.weekdays.includes(day.value)}
-                  onChange={() => handleWeekdayChange(day.value)}
-                  disabled={isCustom}
-                />
-                {day.label}
-              </label>
-            ))}
-          </div>
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={isCustom}
-            onChange={(e) => {
-              setIsCustom(e.target.checked);
-              setError("");
-            }}
-            style={{ marginRight: 10 }}
-          />
-          Custom Scheduler
-        </label>
-        {isCustom && (
-          <div
-            style={{
-              border: "1px solid #ccc",
-              padding: 12,
-              marginBottom: 24,
-              marginTop: 16,
-            }}
-          >
-            <label>
-              Custom Type
-              <select
-                value={customType}
-                onChange={(e) => setCustomType(e.target.value)}
-                style={{ display: "block", marginBottom: 8, width: "100%" }}
-                required
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h5" fontWeight={700} mb={2}>
+          Add New Scheduler
+        </Typography>
+        <form onSubmit={handleSubmit}>
+          <Stack spacing={2}>
+            <TextField
+              label="Scheduler Name"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
+              inputProps={{ maxLength: 100 }}
+              error={!!(error && error.toLowerCase().includes("name"))}
+              helperText={
+                error && error.toLowerCase().includes("name") ? error : ""
+              }
+            />
+            <FormControl fullWidth required>
+              <InputLabel>Job</InputLabel>
+              <Select
+                name="jobId"
+                value={form.jobId}
+                label="Job"
+                onChange={handleChange}
               >
-                <option value="">Select Type</option>
-                {CUSTOM_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
+                <MenuItem value="">Select Job</MenuItem>
+                {jobs.map((job) => (
+                  <MenuItem key={job.id} value={job.id}>
+                    {job.name}
+                  </MenuItem>
                 ))}
-              </select>
-            </label>
-            <br />
-            <label>
-              x:&nbsp;
-              <input
-                type="number"
-                min="1"
-                max={getMaxX(customType)}
-                value={customX}
-                onChange={(e) => setCustomX(e.target.value)}
-                style={{ width: 60, marginRight: 10 }}
-                required
-              />
-              <span style={{ fontSize: "0.9em", color: "#888" }}>
-                &nbsp;(Max: {getMaxX(customType)})
-              </span>
-            </label>
-            {[
-              "business_day_quarter",
-              "day_quarter",
-              "business_day_halfyear",
-              "day_halfyear",
-              "business_day_annually",
-              "day_annually",
-            ].includes(customType) && (
-              <>
-                <label>
-                  y:&nbsp;
-                  <input
-                    type="number"
-                    min="1"
-                    max={
-                      customType.includes("quarter")
-                        ? 4
-                        : customType.includes("halfyear")
-                        ? 2
-                        : 1
+              </Select>
+            </FormControl>
+            <FormControl component="fieldset" disabled={isCustom}>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Days of Week
+              </Typography>
+              <FormGroup row>
+                {WEEKDAYS.map((day) => (
+                  <FormControlLabel
+                    key={day.value}
+                    control={
+                      <Checkbox
+                        checked={form.weekdays.includes(day.value)}
+                        onChange={() => handleWeekdayChange(day.value)}
+                        disabled={isCustom}
+                      />
                     }
-                    value={customY}
-                    onChange={(e) => setCustomY(e.target.value)}
-                    style={{ width: 60 }}
-                    required
+                    label={day.label}
                   />
-                  <span style={{ fontSize: "0.9em", color: "#888" }}>
-                    &nbsp;
-                    {customType.includes("quarter")
-                      ? "(1-4: Q1-Q4)"
-                      : customType.includes("halfyear")
-                      ? "(1-2: H1-H2)"
-                      : "(1: Annually)"}
-                  </span>
-                </label>
-                <br />
-              </>
+                ))}
+              </FormGroup>
+            </FormControl>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isCustom}
+                  onChange={(e) => {
+                    setIsCustom(e.target.checked);
+                    setError("");
+                  }}
+                />
+              }
+              label="Custom Scheduler"
+            />
+            {isCustom && (
+              <Box
+                sx={{ border: "1px solid #ccc", borderRadius: 2, p: 2, mb: 2 }}
+              >
+                <FormControl fullWidth required sx={{ mb: 2 }}>
+                  <InputLabel>Custom Type</InputLabel>
+                  <Select
+                    value={customType}
+                    label="Custom Type"
+                    onChange={(e) => setCustomType(e.target.value)}
+                  >
+                    <MenuItem value="">Select Type</MenuItem>
+                    {CUSTOM_OPTIONS.map((opt) => (
+                      <MenuItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <TextField
+                    label="x"
+                    type="number"
+                    inputProps={{
+                      min: 1,
+                      max: getMaxX(customType),
+                    }}
+                    value={customX}
+                    onChange={(e) => setCustomX(e.target.value)}
+                    required
+                    sx={{ width: 100 }}
+                    helperText={`Max: ${getMaxX(customType)}`}
+                  />
+                  {[
+                    "business_day_quarter",
+                    "day_quarter",
+                    "business_day_halfyear",
+                    "day_halfyear",
+                    "business_day_annually",
+                    "day_annually",
+                  ].includes(customType) && (
+                    <TextField
+                      label="y"
+                      type="number"
+                      inputProps={{
+                        min: 1,
+                        max: customType.includes("quarter")
+                          ? 4
+                          : customType.includes("halfyear")
+                          ? 2
+                          : 1,
+                      }}
+                      value={customY}
+                      onChange={(e) => setCustomY(e.target.value)}
+                      required
+                      sx={{ width: 100 }}
+                      helperText={
+                        customType.includes("quarter")
+                          ? "1-4: Q1-Q4"
+                          : customType.includes("halfyear")
+                          ? "1-2: H1-H2"
+                          : "1: Annually"
+                      }
+                    />
+                  )}
+                </Stack>
+              </Box>
             )}
-          </div>
-        )}
-        <br />
-        <br />
-        <label>
-          Time
-          <input
-            type="time"
-            name="time"
-            value={form.time}
-            onChange={handleChange}
-            required
-            style={{ display: "block", marginBottom: 16, width: "100%" }}
-          />
-        </label>
-        <label>
-          Timezone
-          <select
-            name="timezone"
-            value={form.timezone}
-            onChange={handleChange}
-            required
-            style={{ display: "block", marginBottom: 16, width: "100%" }}
-          >
-            {TIMEZONES.map((tz) => (
-              <option key={tz} value={tz}>
-                {tz}
-              </option>
-            ))}
-          </select>
-        </label>
-        {error && !error.toLowerCase().includes("name") && (
-          <div style={{ color: "red", marginBottom: 8 }}>{error}</div>
-        )}
-        <button type="submit">Save Scheduler</button>
-        <button
-          type="button"
-          onClick={() => history.push("/scheduler")}
-          style={{ marginLeft: 10 }}
-        >
-          Cancel
-        </button>
-      </form>
-    </div>
+            <TextField
+              label="Time"
+              name="time"
+              type="time"
+              value={form.time}
+              onChange={handleChange}
+              required
+              InputLabelProps={{ shrink: true }}
+            />
+            <FormControl fullWidth required>
+              <InputLabel>Timezone</InputLabel>
+              <Select
+                name="timezone"
+                value={form.timezone}
+                label="Timezone"
+                onChange={handleChange}
+              >
+                {TIMEZONES.map((tz) => (
+                  <MenuItem key={tz} value={tz}>
+                    {tz}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {error && !error.toLowerCase().includes("name") && (
+              <Alert severity="error">{error}</Alert>
+            )}
+            <Stack direction="row" spacing={2}>
+              <Button type="submit" variant="contained" color="primary">
+                Save Scheduler
+              </Button>
+              <Button
+                type="button"
+                variant="outlined"
+                color="secondary"
+                onClick={() => navigate("/scheduler")}
+              >
+                Cancel
+              </Button>
+            </Stack>
+          </Stack>
+        </form>
+      </Paper>
+    </Container>
   );
 }
 

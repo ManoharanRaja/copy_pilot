@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import {
+  Typography,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Stack,
+  Box,
+} from "@mui/material";
 
 function GlobalVariables() {
   const [vars, setVars] = useState([]);
@@ -156,196 +173,222 @@ function GlobalVariables() {
   };
 
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
+    <Box
+      sx={{
+        width: "100vw",
+        minHeight: "100vh",
+        bgcolor: "transparent",
+        px: { xs: 2, md: 6 },
+        py: 4,
+      }}
+    >
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={2}
       >
-        <h2>Global Variables</h2>
-        <button
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src="/globalvars.png"
+            alt="Global Variables"
+            style={{ width: 80, height: 80, marginRight: 12 }} // doubled from 40 to 80
+          />
+          <Typography variant="h5" fontWeight={700}>
+            Global Variables
+          </Typography>
+        </Box>
+
+        <Button
           onClick={handleRefreshAll}
           disabled={refreshingAll}
-          style={{
-            background: "#007bff",
-            color: "#fff",
-            padding: "8px 16px",
-            border: "none",
-            borderRadius: 4,
-            cursor: refreshingAll ? "not-allowed" : "pointer",
-            fontWeight: "bold",
-          }}
-          title="Refresh all dynamic variables"
+          variant="contained"
+          color="primary"
         >
           {refreshingAll ? "Refreshing..." : "Refresh All"}
-        </button>
-      </div>
-      <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label>
-              Name
-              <input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                style={{ marginLeft: 8, marginRight: 16 }}
-                required
-                disabled={editing}
-              />
-            </label>
-            {typeof error === "string" &&
-              error.toLowerCase().includes("name") && (
-                <div style={{ color: "red", marginTop: 4 }}>{error}</div>
-              )}
-          </div>
-          <label>
-            Type
-            <select
+        </Button>
+      </Stack>
+      <Box component="form" onSubmit={handleSubmit} sx={{ mb: 3 }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          alignItems="flex-start"
+        >
+          <TextField
+            label="Name"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            disabled={editing}
+            error={
+              typeof error === "string" && error.toLowerCase().includes("name")
+            }
+            helperText={
+              typeof error === "string" && error.toLowerCase().includes("name")
+                ? error
+                : ""
+            }
+            sx={{ minWidth: 180 }}
+          />
+          <FormControl sx={{ minWidth: 120 }}>
+            <InputLabel>Type</InputLabel>
+            <Select
               name="type"
               value={form.type}
+              label="Type"
               onChange={handleChange}
-              style={{ marginLeft: 8, marginRight: 16 }}
             >
-              <option value="static">Static</option>
-              <option value="dynamic">Dynamic</option>
-            </select>
-          </label>
+              <MenuItem value="static">Static</MenuItem>
+              <MenuItem value="dynamic">Dynamic</MenuItem>
+            </Select>
+          </FormControl>
           {form.type === "static" ? (
-            <label>
-              Value
-              <input
-                name="value"
-                value={form.value}
-                onChange={handleChange}
-                style={{ marginLeft: 8, marginRight: 16, width: 200 }}
-                required
-              />
-            </label>
+            <TextField
+              label="Value"
+              name="value"
+              value={form.value}
+              onChange={handleChange}
+              required
+              sx={{ minWidth: 200 }}
+            />
           ) : (
-            <label style={{ display: "flex", flexDirection: "column" }}>
-              Python Code
-              <textarea
+            <Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
+              <TextField
+                label="Python Code"
                 name="expression"
                 value={form.expression}
                 onChange={handleChange}
-                style={{
-                  marginLeft: 8,
-                  marginRight: 16,
-                  width: 400,
-                  height: 80,
-                  fontFamily: "monospace",
-                  resize: "vertical",
-                }}
                 required
+                multiline
+                minRows={3}
+                sx={{
+                  fontFamily: "monospace",
+                  width: 400,
+                  mb: 1,
+                }}
                 placeholder="Enter Python expression or code"
               />
-              <div style={{ marginLeft: 8, marginTop: 4 }}>
-                <button
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Button
                   type="button"
                   onClick={handleRunExpression}
-                  style={{ marginRight: 8 }}
+                  variant="outlined"
                 >
                   Run Code
-                </button>
-                <b>Value:</b>{" "}
-                {evalValue !== "" ? (
-                  <span style={{ fontFamily: "monospace" }}>
-                    {String(evalValue)}
-                  </span>
-                ) : (
-                  <i>Type python code and click Run Code</i>
-                )}
-              </div>
-            </label>
+                </Button>
+                <Typography variant="body2">
+                  <b>Value:</b>{" "}
+                  {evalValue !== "" ? (
+                    <span style={{ fontFamily: "monospace" }}>
+                      {String(evalValue)}
+                    </span>
+                  ) : (
+                    <i>Type python code and click Run Code</i>
+                  )}
+                </Typography>
+              </Stack>
+            </Box>
           )}
-        </div>
-        {typeof error === "string" && !error.toLowerCase().includes("name") && (
-          <div style={{ color: "red", marginTop: 8 }}>{error}</div>
-        )}
-        <div style={{ marginTop: 12 }}>
-          <button type="submit">
+        </Stack>
+        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+          <Button type="submit" variant="contained" color="primary">
             {editing ? "Update Variable" : "Add Variable"}
-          </button>
+          </Button>
           {editing && (
-            <button
+            <Button
               type="button"
               onClick={handleCancel}
-              style={{ marginLeft: 8 }}
+              variant="outlined"
+              color="secondary"
             >
               Cancel
-            </button>
+            </Button>
           )}
-        </div>
-      </form>
-      <table border="1" cellPadding="8">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Value</th>
-            <th>Python Code</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {vars.map((v) => (
-            <tr key={v.id}>
-              <td>{v.name}</td>
-              <td>{v.type}</td>
-              <td>{v.value}</td>
-              <td>
-                {v.type === "dynamic" ? (
-                  <pre
-                    style={{
-                      fontFamily: "monospace",
-                      margin: 0,
-                      background: "#f8f8f8",
-                    }}
-                  >
-                    {v.expression}
-                  </pre>
-                ) : (
-                  ""
-                )}
-              </td>
-              <td>
-                <button
-                  onClick={() => handleEdit(v)}
-                  style={{ marginRight: 8 }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(v.id)}
-                  style={{ color: "red", marginRight: 8 }}
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={() => handleRefresh(v)}
-                  disabled={v.type !== "dynamic"}
-                  style={{
-                    color: v.type === "dynamic" ? "blue" : "gray",
-                    cursor: v.type === "dynamic" ? "pointer" : "not-allowed",
-                  }}
-                  title={
-                    v.type === "dynamic"
-                      ? "Refresh value"
-                      : "Only available for dynamic variables"
-                  }
-                >
-                  Refresh
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        </Stack>
+      </Box>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Value</TableCell>
+              <TableCell>Python Code</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {vars.map((v) => (
+              <TableRow key={v.id}>
+                <TableCell>{v.name}</TableCell>
+                <TableCell>{v.type}</TableCell>
+                <TableCell>{v.value}</TableCell>
+                <TableCell>
+                  {v.type === "dynamic" ? (
+                    <pre
+                      style={{
+                        fontFamily: "monospace",
+                        margin: 0,
+                        background: "#f8f8f8",
+                      }}
+                    >
+                      {v.expression}
+                    </pre>
+                  ) : (
+                    ""
+                  )}
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      onClick={() => handleEdit(v)}
+                      variant="outlined"
+                      size="small"
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(v.id)}
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                    >
+                      Delete
+                    </Button>
+                    <Button
+                      onClick={() => handleRefresh(v)}
+                      disabled={v.type !== "dynamic"}
+                      variant="outlined"
+                      color={v.type === "dynamic" ? "primary" : "inherit"}
+                      size="small"
+                      sx={{
+                        cursor:
+                          v.type === "dynamic" ? "pointer" : "not-allowed",
+                      }}
+                      title={
+                        v.type === "dynamic"
+                          ? "Refresh value"
+                          : "Only available for dynamic variables"
+                      }
+                    >
+                      Refresh
+                    </Button>
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))}
+            {vars.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  No global variables found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 }
-
 export default GlobalVariables;

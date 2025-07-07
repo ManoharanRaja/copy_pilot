@@ -1,7 +1,25 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { validateJob } from "../../utils/jobValidation";
+import {
+  Box,
+  Button,
+  Checkbox,
+  Container,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 function NewJob() {
   const [form, setForm] = useState({
@@ -18,29 +36,30 @@ function NewJob() {
     targetContainer: "",
   });
   const [azureSources, setAzureSources] = useState([]);
-  const history = useHistory();
+  const navigate = useNavigate();
   const [errors, setErrors] = useState({});
   const [jobs, setJobs] = useState([]);
 
   useEffect(() => {
-    // Fetch Azure Data Lake sources
     axios.get("/datasources?type=azure").then((res) => {
       setAzureSources(res.data || []);
     });
-    // Fetch existing jobs for name uniqueness check
     axios.get("/jobs").then((res) => {
       setJobs(res.data || []);
     });
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    // Clear the error for the field being edited
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: undefined });
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: undefined });
     }
   };
-  // Helper to get containers for selected Azure Data Lake
+
   const getContainers = (azureId) => {
     const ds = azureSources.find((d) => d.id === azureId);
     return ds && ds.containers ? ds.containers : [];
@@ -90,7 +109,7 @@ function NewJob() {
           "X-Machine-Name": machineName,
         },
       });
-      history.push("/jobs");
+      navigate("/jobs");
     } catch (error) {
       const detail =
         error.response?.data?.detail ||
@@ -102,306 +121,258 @@ function NewJob() {
   };
 
   return (
-    <div>
-      <h2>Add New Job</h2>
-      <form onSubmit={handleSubmit}>
-        <div style={{ display: "flex", gap: "40px", marginBottom: "20px" }}>
-          {/* Source Section */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              borderRight: "1px solid #ccc",
-              paddingRight: "20px",
-            }}
-          >
-            <h3>Source Details</h3>
-            {/* ...Job Name, Source Type... */}
-            <label>
-              Job Name
-              <input
-                name="name"
-                placeholder="Job Name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                style={errors.name ? { borderColor: "red" } : {}}
-              />
-              {errors.name && (
-                <span style={{ color: "red", fontSize: "12px" }}>
-                  {errors.name}
-                </span>
-              )}
-            </label>
-            <label>
-              Source Type
-              <select
-                name="sourceType"
-                value={form.sourceType}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Source Type</option>
-                <option value="azure">Azure Data Lake Storage</option>
-                <option value="local">Local Folder</option>
-                <option value="shared">Shared Folder</option>
-              </select>
-            </label>
-            {/* Azure Data Lake Source Dropdown */}
-            {form.sourceType === "azure" && (
-              <>
-                <label>
-                  Azure Data Lake Source
-                  <select
-                    name="sourceAzureId"
-                    value={form.sourceAzureId}
+    <Container maxWidth="md" sx={{ mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h5" fontWeight={700} mb={3}>
+          Add New Job
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={5} mb={3}>
+            {/* Source Section */}
+            <Box flex={1}>
+              <Typography variant="h6" mb={2}>
+                Source Details
+              </Typography>
+              <Stack spacing={2}>
+                <TextField
+                  label="Job Name"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                  error={!!errors.name}
+                  helperText={errors.name}
+                  fullWidth
+                />
+                <FormControl fullWidth required error={!!errors.sourceType}>
+                  <InputLabel>Source Type</InputLabel>
+                  <Select
+                    name="sourceType"
+                    value={form.sourceType}
+                    label="Source Type"
                     onChange={handleChange}
-                    required
                   >
-                    <option value="">Select Azure Data Lake Source</option>
-                    {azureSources.map((ds) => (
-                      <option key={ds.id} value={ds.id}>
-                        {ds.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {/* Container Text Field */}
-                {form.sourceAzureId && (
-                  <label>
-                    Container
-                    <input
-                      name="sourceContainer"
-                      value={form.sourceContainer}
-                      onChange={handleChange}
-                      required={getContainers(form.sourceAzureId).length === 0}
-                      placeholder={
-                        getContainers(form.sourceAzureId).length > 0
-                          ? getContainers(form.sourceAzureId)[0]
-                          : "Enter container name"
-                      }
-                      style={{ color: "#888" }}
-                    />
-                  </label>
+                    <MenuItem value="">Select Source Type</MenuItem>
+                    <MenuItem value="azure">Azure Data Lake Storage</MenuItem>
+                    <MenuItem value="local">Local Folder</MenuItem>
+                    <MenuItem value="shared">Shared Folder</MenuItem>
+                  </Select>
+                  {errors.sourceType && (
+                    <FormHelperText>{errors.sourceType}</FormHelperText>
+                  )}
+                </FormControl>
+                {form.sourceType === "azure" && (
+                  <>
+                    <FormControl fullWidth required>
+                      <InputLabel>Azure Data Lake Source</InputLabel>
+                      <Select
+                        name="sourceAzureId"
+                        value={form.sourceAzureId}
+                        label="Azure Data Lake Source"
+                        onChange={handleChange}
+                      >
+                        <MenuItem value="">
+                          Select Azure Data Lake Source
+                        </MenuItem>
+                        {azureSources.map((ds) => (
+                          <MenuItem key={ds.id} value={ds.id}>
+                            {ds.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {form.sourceAzureId && (
+                      <TextField
+                        label="Container"
+                        name="sourceContainer"
+                        value={form.sourceContainer}
+                        onChange={handleChange}
+                        required={
+                          getContainers(form.sourceAzureId).length === 0
+                        }
+                        placeholder={
+                          getContainers(form.sourceAzureId).length > 0
+                            ? getContainers(form.sourceAzureId)[0]
+                            : "Enter container name"
+                        }
+                        fullWidth
+                        InputProps={{
+                          style: { color: "#888" },
+                        }}
+                      />
+                    )}
+                  </>
                 )}
-              </>
-            )}
-            {/* ...Source Folder, File Mask... */}
-            <label>
-              Source Folder
-              <input
-                name="source"
-                placeholder="Source Folder"
-                value={form.source}
-                onChange={handleChange}
-                required
-                style={{
-                  ...(errors.source ? { borderColor: "red" } : {}),
-                  width: "400px",
-                }}
-              />
-              {errors.source && (
-                <span style={{ color: "red", fontSize: "12px" }}>
-                  {errors.source}
-                </span>
-              )}
-            </label>
-            <label>
-              File Mask
-              <input
-                name="sourceFileMask"
-                placeholder="File Mask (e.g. *.csv)"
-                value={form.sourceFileMask}
-                onChange={handleChange}
-                style={{
-                  ...(errors.sourceFileMask ? { borderColor: "red" } : {}),
-                  width: "400px",
-                }}
-              />
-              {errors.sourceFileMask && (
-                <span style={{ color: "red", fontSize: "12px" }}>
-                  {errors.sourceFileMask}
-                </span>
-              )}
-            </label>
-          </div>
-          {/* Target Section */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              paddingLeft: "20px",
-            }}
-          >
-            <h3>Target Details</h3>
-            <label>
-              Target Type
-              <select
-                name="targetType"
-                value={form.targetType}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select Target Type</option>
-                <option value="azure">Azure Data Lake</option>
-                <option value="local">Local Folder</option>
-                <option value="shared">Shared Folder</option>
-              </select>
-            </label>
-            {/* Azure Data Lake Target Dropdown */}
-            {form.targetType === "azure" && (
-              <>
-                <label>
-                  Azure Data Lake Target
-                  <select
-                    name="targetAzureId"
-                    value={form.targetAzureId}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Select Azure Data Lake Target</option>
-                    {azureSources.map((ds) => (
-                      <option key={ds.id} value={ds.id}>
-                        {ds.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {/* Container Text Field */}
-                {form.targetAzureId && (
-                  <label>
-                    Container
-                    <input
-                      name="targetContainer"
-                      value={form.targetContainer}
-                      onChange={handleChange}
-                      required={getContainers(form.targetAzureId).length === 0}
-                      placeholder={
-                        getContainers(form.targetAzureId).length > 0
-                          ? getContainers(form.targetAzureId)[0]
-                          : "Enter container name"
-                      }
-                      style={{ color: "#888" }}
-                    />
-                  </label>
-                )}
-              </>
-            )}
-            {/* ...Target Folder, File Mask, Schedule... */}
-            <label>
-              Target Folder
-              <input
-                name="target"
-                placeholder="Target Folder"
-                value={form.target}
-                onChange={handleChange}
-                required
-                style={{
-                  ...(errors.target ? { borderColor: "red" } : {}),
-                  width: "400px",
-                }}
-              />
-              {errors.target && (
-                <span style={{ color: "red", fontSize: "12px" }}>
-                  {errors.target}
-                </span>
-              )}
-            </label>
-            <label>
-              File Mask
-              <input
-                name="targetFileMask"
-                placeholder="File Mask (e.g. *.csv)"
-                value={form.targetFileMask}
-                onChange={handleChange}
-                style={{
-                  ...(errors.targetFileMask ? { borderColor: "red" } : {}),
-                  width: "400px",
-                }}
-              />
-              {errors.targetFileMask && (
-                <span style={{ color: "red", fontSize: "12px" }}>
-                  {errors.targetFileMask}
-                </span>
-              )}
-            </label>
-          </div>
-        </div>
-        <div style={{ marginTop: 16 }}>
-          <label>
-            <input
-              type="checkbox"
-              name="time_travel_enabled"
-              checked={!!form.time_travel_enabled}
-              onChange={(e) =>
-                setForm((f) => ({
-                  ...f,
-                  time_travel_enabled: e.target.checked,
-                  // Clear dates if unchecked
-                  ...(e.target.checked
-                    ? {}
-                    : { time_travel_from: "", time_travel_to: "" }),
-                }))
-              }
+                <TextField
+                  label="Source Folder"
+                  name="source"
+                  placeholder="Source Folder"
+                  value={form.source}
+                  onChange={handleChange}
+                  required
+                  error={!!errors.source}
+                  helperText={errors.source}
+                  fullWidth
+                />
+                <TextField
+                  label="File Mask"
+                  name="sourceFileMask"
+                  placeholder="File Mask (e.g. *.csv)"
+                  value={form.sourceFileMask}
+                  onChange={handleChange}
+                  error={!!errors.sourceFileMask}
+                  helperText={errors.sourceFileMask}
+                  fullWidth
+                />
+              </Stack>
+            </Box>
+            <Divider
+              orientation="vertical"
+              flexItem
+              sx={{ display: { xs: "none", md: "block" } }}
             />
-            Enable Time Travel Run
-          </label>
-        </div>
-        {form.time_travel_enabled && (
-          <div style={{ marginTop: 8, display: "flex", gap: 16 }}>
-            <label
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                fontWeight: "bold",
-              }}
-            >
-              From
-              <input
+            {/* Target Section */}
+            <Box flex={1}>
+              <Typography variant="h6" mb={2}>
+                Target Details
+              </Typography>
+              <Stack spacing={2}>
+                <FormControl fullWidth required error={!!errors.targetType}>
+                  <InputLabel>Target Type</InputLabel>
+                  <Select
+                    name="targetType"
+                    value={form.targetType}
+                    label="Target Type"
+                    onChange={handleChange}
+                  >
+                    <MenuItem value="">Select Target Type</MenuItem>
+                    <MenuItem value="azure">Azure Data Lake</MenuItem>
+                    <MenuItem value="local">Local Folder</MenuItem>
+                    <MenuItem value="shared">Shared Folder</MenuItem>
+                  </Select>
+                  {errors.targetType && (
+                    <FormHelperText>{errors.targetType}</FormHelperText>
+                  )}
+                </FormControl>
+                {form.targetType === "azure" && (
+                  <>
+                    <FormControl fullWidth required>
+                      <InputLabel>Azure Data Lake Target</InputLabel>
+                      <Select
+                        name="targetAzureId"
+                        value={form.targetAzureId}
+                        label="Azure Data Lake Target"
+                        onChange={handleChange}
+                      >
+                        <MenuItem value="">
+                          Select Azure Data Lake Target
+                        </MenuItem>
+                        {azureSources.map((ds) => (
+                          <MenuItem key={ds.id} value={ds.id}>
+                            {ds.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {form.targetAzureId && (
+                      <TextField
+                        label="Container"
+                        name="targetContainer"
+                        value={form.targetContainer}
+                        onChange={handleChange}
+                        required={
+                          getContainers(form.targetAzureId).length === 0
+                        }
+                        placeholder={
+                          getContainers(form.targetAzureId).length > 0
+                            ? getContainers(form.targetAzureId)[0]
+                            : "Enter container name"
+                        }
+                        fullWidth
+                        InputProps={{
+                          style: { color: "#888" },
+                        }}
+                      />
+                    )}
+                  </>
+                )}
+                <TextField
+                  label="Target Folder"
+                  name="target"
+                  placeholder="Target Folder"
+                  value={form.target}
+                  onChange={handleChange}
+                  required
+                  error={!!errors.target}
+                  helperText={errors.target}
+                  fullWidth
+                />
+                <TextField
+                  label="File Mask"
+                  name="targetFileMask"
+                  placeholder="File Mask (e.g. *.csv)"
+                  value={form.targetFileMask}
+                  onChange={handleChange}
+                  error={!!errors.targetFileMask}
+                  helperText={errors.targetFileMask}
+                  fullWidth
+                />
+              </Stack>
+            </Box>
+          </Stack>
+          {/* Time Travel */}
+          <FormGroup sx={{ mt: 2 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  name="time_travel_enabled"
+                  checked={!!form.time_travel_enabled}
+                  onChange={handleChange}
+                />
+              }
+              label="Enable Time Travel Run"
+            />
+          </FormGroup>
+          {form.time_travel_enabled && (
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={1}>
+              <TextField
+                label="From"
                 type="date"
                 name="time_travel_from"
                 value={form.time_travel_from || ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, time_travel_from: e.target.value }))
-                }
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
                 required
+                sx={{ flex: 1 }}
               />
-            </label>
-            <label
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                fontWeight: "bold",
-              }}
-            >
-              To
-              <input
+              <TextField
+                label="To"
                 type="date"
                 name="time_travel_to"
                 value={form.time_travel_to || ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, time_travel_to: e.target.value }))
-                }
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
                 required
+                sx={{ flex: 1 }}
               />
-            </label>
-          </div>
-        )}
-        <br />
-        <button type="submit">Save Job</button>
-        <button
-          type="button"
-          onClick={() => history.push("/jobs")}
-          style={{ marginLeft: "10px" }}
-        >
-          Cancel
-        </button>
-      </form>
-    </div>
+            </Stack>
+          )}
+          <Stack direction="row" spacing={2} mt={4}>
+            <Button type="submit" variant="contained" color="primary">
+              Save Job
+            </Button>
+            <Button
+              type="button"
+              onClick={() => navigate("/jobs")}
+              variant="outlined"
+              color="secondary"
+            >
+              Cancel
+            </Button>
+          </Stack>
+        </Box>
+      </Paper>
+    </Container>
   );
 }
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Configuration from "./pages/Configuration";
 import NotFound from "./pages/NotFound";
@@ -25,27 +25,27 @@ const App = () => {
         style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
       >
         <div style={{ flex: 1 }}>
-          <Switch>
-            <Route path="/" exact component={Dashboard} />
-            <Route path="/scheduler/new" component={NewScheduler} />
-            <Route path="/scheduler/edit/:id" component={EditScheduler} />
-            <Route path="/scheduler" component={Scheduler} />
-            <Route path="/configuration" component={Configuration} />
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/scheduler/new" element={<NewScheduler />} />
+            <Route path="/scheduler/edit/:id" element={<EditScheduler />} />
+            <Route path="/scheduler" element={<Scheduler />} />
+            <Route path="/configuration" element={<Configuration />} />
             <Route
               path="/jobs/:id/local-variables"
-              component={LocalVariables}
+              element={<LocalVariables />}
             />
-            <Route path="/jobs/:id/run-history" component={JobRunHistory} />
-            <Route path="/jobs/:id/clone" component={CloneJob} />
-            <Route path="/jobs/:id/edit" component={EditJob} />
-            <Route path="/jobs/new" component={NewJob} />
-            <Route path="/jobs" component={Jobs} />
-            <Route path="/datasource/:id/edit" component={EditDataSource} />
-            <Route path="/datasource/new" component={NewDataSource} />
-            <Route path="/datasource" component={DataSource} />
-            <Route path="/global-variables" component={GlobalVariables} />
-            <Route component={NotFound} />
-          </Switch>
+            <Route path="/jobs/:id/run-history" element={<JobRunHistory />} />
+            <Route path="/jobs/:id/clone" element={<CloneJob />} />
+            <Route path="/jobs/:id/edit" element={<EditJob />} />
+            <Route path="/jobs/new" element={<NewJob />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/datasource/:id/edit" element={<EditDataSource />} />
+            <Route path="/datasource/new" element={<NewDataSource />} />
+            <Route path="/datasource" element={<DataSource />} />
+            <Route path="/global-variables" element={<GlobalVariables />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </div>
         <Footer />
       </div>

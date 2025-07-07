@@ -1,6 +1,15 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {
+  Typography,
+  TextField,
+  Button,
+  Box,
+  Stack,
+  Alert,
+  CircularProgress,
+} from "@mui/material";
 
 function NewDataSource() {
   const [selectedType, setSelectedType] = useState("");
@@ -14,8 +23,8 @@ function NewDataSource() {
   const [testStatus, setTestStatus] = useState(null); // null | "success" | "fail"
   const [testing, setTesting] = useState(false);
   const [errors, setErrors] = useState({});
-  const history = useHistory();
   const [testError, setTestError] = useState("");
+  const navigate = useNavigate();
 
   const handleTypeSelect = (type) => {
     setSelectedType(type);
@@ -97,7 +106,7 @@ function NewDataSource() {
           container: form.container,
         },
       });
-      history.push("/datasource");
+      navigate("/datasource");
     } catch (error) {
       if (
         error.response &&
@@ -106,132 +115,134 @@ function NewDataSource() {
       ) {
         setErrors({ ...errs, name: "Data source name already exists." });
       } else {
-        // Optionally handle other errors
         alert("An error occurred. Please try again.");
       }
     }
   };
 
   return (
-    <div>
-      <h1>Add New Data Source</h1>
+    <Box
+      sx={{
+        width: "100vw",
+        minHeight: "100vh",
+        bgcolor: "transparent",
+        px: { xs: 2, md: 6 },
+        py: 4,
+      }}
+    >
+      <Typography variant="h5" gutterBottom>
+        Add New Data Source
+      </Typography>
       {!selectedType ? (
-        <div>
-          <h2>Select Data Source Type</h2>
-          <button onClick={() => handleTypeSelect("Azure Data Lake Storage")}>
-            Azure Data Lake Storage (Azure Data Lake Storage)
-          </button>
-        </div>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Select Data Source Type
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => handleTypeSelect("Azure Data Lake Storage")}
+          >
+            Azure Data Lake Storage
+          </Button>
+        </Box>
       ) : (
-        <form
+        <Box
+          component="form"
           onSubmit={handleSubmit}
-          style={{
-            marginTop: 40,
-            maxWidth: 400,
-            background: "#fafafa",
-            padding: 24,
-            borderRadius: 8,
-            boxShadow: "0 2px 8px #eee",
+          sx={{
             display: "flex",
             flexDirection: "column",
-            gap: 16,
+            gap: 2,
+            mt: 2,
+            maxWidth: 500,
           }}
         >
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{ marginBottom: 4 }}>
-              Name<span style={{ color: "red" }}> *</span>
-            </label>
-            <input
-              name="name"
-              placeholder="Enter name *"
-              value={form.name}
-              onChange={handleChange}
-              style={{ padding: 8 }}
-            />
-            {errors.name && (
-              <span style={{ color: "red", fontSize: 12 }}>{errors.name}</span>
-            )}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{ marginBottom: 4 }}>
-              Account Name<span style={{ color: "red" }}> *</span>
-            </label>
-            <input
-              name="account_name"
-              placeholder="Enter account name *"
-              value={form.account_name}
-              onChange={handleChange}
-              style={{ padding: 8 }}
-            />
-            <span style={{ fontSize: 12, color: "#888", marginTop: 2 }}>
-              https://{form.account_name || "{account_name}"}
-              .dfs.core.windows.net/
-            </span>
-            {errors.account_name && (
-              <span style={{ color: "red", fontSize: 12 }}>
-                {errors.account_name}
-              </span>
-            )}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{ marginBottom: 4 }}>
-              Account Key<span style={{ color: "red" }}> *</span>
-            </label>
-            <input
-              name="account_key"
-              type="password"
-              placeholder="Enter account key *"
-              value={form.account_key}
-              onChange={handleChange}
-              style={{ padding: 8 }}
-            />
-            {errors.account_key && (
-              <span style={{ color: "red", fontSize: 12 }}>
-                {errors.account_key}
-              </span>
-            )}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{ marginBottom: 4 }}>Container</label>
-            <input
-              name="container"
-              placeholder="Container (Optional)"
-              value={form.container}
-              onChange={handleChange}
-              style={{ padding: 8 }}
-            />
-          </div>
-          <button
-            type="button"
-            onClick={handleTest}
-            style={{ marginTop: 8 }}
-            disabled={testing}
-          >
-            {testing ? "Testing..." : "Test"}
-          </button>
+          {/* ...fields and buttons as before... */}
+          <TextField
+            label="Name"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            error={!!errors.name}
+            helperText={errors.name}
+          />
+          <TextField
+            label="Account Name"
+            name="account_name"
+            value={form.account_name}
+            onChange={handleChange}
+            required
+            error={!!errors.account_name}
+            helperText={
+              errors.account_name ||
+              `https://${
+                form.account_name || "{account_name}"
+              }.dfs.core.windows.net/`
+            }
+          />
+          <TextField
+            label="Account Key"
+            name="account_key"
+            type="password"
+            value={form.account_key}
+            onChange={handleChange}
+            required
+            error={!!errors.account_key}
+            helperText={errors.account_key}
+          />
+          <TextField
+            label="Container (Optional)"
+            name="container"
+            value={form.container}
+            onChange={handleChange}
+          />
+          <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={handleTest}
+              disabled={testing}
+            >
+              {testing ? (
+                <>
+                  <CircularProgress size={18} sx={{ mr: 1 }} />
+                  Testing...
+                </>
+              ) : (
+                "Test"
+              )}
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={testStatus !== "success"}
+            >
+              Add
+            </Button>
+            <Button
+              type="button"
+              variant="outlined"
+              color="secondary"
+              onClick={() => setSelectedType("")}
+            >
+              Back
+            </Button>
+          </Stack>
           {testStatus === "success" && (
-            <div style={{ color: "green" }}>Connection successful!</div>
+            <Alert severity="success" sx={{ mt: 2 }}>
+              Connection successful!
+            </Alert>
           )}
           {testStatus === "fail" && (
-            <div style={{ color: "red" }}>{testError}</div>
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {testError}
+            </Alert>
           )}
-          <button
-            type="submit"
-            style={{ marginTop: 8 }}
-            disabled={testStatus !== "success"}
-          >
-            Add
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedType("")}
-            style={{ marginTop: 4 }}
-          >
-            Back
-          </button>
-        </form>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }
 

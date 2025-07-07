@@ -1,6 +1,25 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {
+  Typography,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Stack,
+  Chip,
+  Box,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import HistoryIcon from "@mui/icons-material/History";
+import DeleteIcon from "@mui/icons-material/Delete";
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"],
@@ -11,11 +30,12 @@ function ordinal(n) {
 function Scheduler() {
   const [jobs, setJobs] = useState([]);
   const [schedules, setSchedules] = useState([]);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     axios.get("/jobs").then((res) => setJobs(res.data || []));
     fetchSchedules();
+    // eslint-disable-next-line
   }, []);
 
   const fetchSchedules = async () => {
@@ -29,143 +49,175 @@ function Scheduler() {
   };
 
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
+    <Box
+      sx={{
+        width: "100vw",
+        minHeight: "100vh",
+        bgcolor: "transparent",
+        px: { xs: 2, md: 6 },
+        py: 4,
+      }}
+    >
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        mb={2}
       >
-        <h2>Scheduler</h2>
-        <button
-          onClick={() => history.push("/scheduler/new")}
-          style={{ marginLeft: "auto" }}
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <img
+            src="/scheduler.png"
+            alt="Scheduler"
+            style={{ width: 80, height: 80, marginRight: 12 }} // doubled from 40 to 80
+          />
+          <Typography variant="h4" fontWeight={700}>
+            Scheduler
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => navigate("/scheduler/new")}
+          sx={{ fontWeight: 600 }}
         >
           Add New Scheduler
-        </button>
-      </div>
-      <table border="1" cellPadding="8" style={{ width: "100%" }}>
-        <thead>
-          <tr>
-            <th>Scheduler Name</th>
-            {/* <th>Scheduler ID</th> */}
-            {/* <th>Job ID</th> */}
-            <th>Job Name</th>
-            <th>Status</th>
-            <th>Schedule</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {schedules.length === 0 && (
-            <tr>
-              <td colSpan={5}>No schedules yet.</td>
-            </tr>
-          )}
-          {schedules.map((sch) => {
-            const job = jobs.find((j) => String(j.id) === String(sch.jobId));
-            return (
-              <tr key={sch.id}>
-                <td>{sch.name}</td>
-                {/*<td>{sch.id}</td>*/}
-                {/*<td>{sch.jobId}</td>*/}
-                <td>{job ? job.name : <i>Job not found</i>}</td>
-                <td>
-                  {sch.paused ? (
-                    <span style={{ color: "orange" }}>Paused</span>
-                  ) : (
-                    <span style={{ color: "green" }}>Active</span>
-                  )}
-                </td>
-                <td>
-                  {sch.customScheduler ? (
-                    <>
-                      <b>
-                        {(() => {
-                          const { type, x, y } = sch.customScheduler;
-                          const ordX = ordinal(x);
-                          switch (type) {
-                            case "business_day_month":
-                              return `${ordX} Business Day of the month`;
-                            case "day_month":
-                              return `${ordX} Day of the month`;
-                            case "business_day_quarter":
-                              return `${ordX} Business Day of Quarter ${y}`;
-                            case "day_quarter":
-                              return `${ordX} Day of Quarter ${y}`;
-                            case "business_day_halfyear":
-                              return `${ordX} Business Day of Half yearly ${y}`;
-                            case "day_halfyear":
-                              return `${ordX} Day of Half yearly ${y}`;
-                            case "business_day_annually":
-                              return `${ordX} Business Day of annually ${y}`;
-                            case "day_annually":
-                              return `${ordX} Day of annually ${y}`;
-                            default:
-                              return "-";
-                          }
-                        })()}
-                      </b>
-                      <br />
-                    </>
-                  ) : sch.weekdays && sch.weekdays.length > 0 ? (
-                    sch.weekdays.join(", ")
-                  ) : (
-                    "—"
-                  )}
-                  <br />
-                  <b>Time:</b> {sch.time || "—"}
-                  <br />
-                  <b>Timezone:</b> {sch.timezone || "—"}
-                </td>
-                <td>
-                  {sch.paused ? (
-                    <button
-                      onClick={async () => {
-                        await axios.post(`/schedules/${sch.id}/resume`);
-                        // Refresh schedules after resume
-                        fetchSchedules();
-                      }}
-                      style={{ marginRight: 8 }}
-                    >
-                      Resume
-                    </button>
-                  ) : (
-                    <button
-                      onClick={async () => {
-                        await axios.post(`/schedules/${sch.id}/pause`);
-                        // Refresh schedules after pause
-                        fetchSchedules();
-                      }}
-                      style={{ marginRight: 8 }}
-                    >
-                      Pause
-                    </button>
-                  )}
-
-                  <button onClick={() => handleDelete(sch.id)}>Delete</button>
-                  <button
-                    style={{ marginLeft: 8 }}
-                    onClick={() => history.push(`/scheduler/edit/${sch.id}`)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    style={{ marginLeft: 8 }}
-                    onClick={() =>
-                      history.push(`/jobs/${sch.jobId}/run-history`)
-                    }
-                  >
-                    View Run History
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+        </Button>
+      </Stack>
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Scheduler Name</TableCell>
+              <TableCell>Job Name</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Schedule</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {schedules.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} align="center">
+                  No schedules yet.
+                </TableCell>
+              </TableRow>
+            )}
+            {schedules.map((sch) => {
+              const job = jobs.find((j) => String(j.id) === String(sch.jobId));
+              return (
+                <TableRow key={sch.id}>
+                  <TableCell>{sch.name}</TableCell>
+                  <TableCell>{job ? job.name : <i>Job not found</i>}</TableCell>
+                  <TableCell>
+                    {sch.paused ? (
+                      <Chip label="Paused" color="warning" />
+                    ) : (
+                      <Chip label="Active" color="success" />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {sch.customScheduler ? (
+                      <>
+                        <b>
+                          {(() => {
+                            const { type, x, y } = sch.customScheduler;
+                            const ordX = ordinal(x);
+                            switch (type) {
+                              case "business_day_month":
+                                return `${ordX} Business Day of the month`;
+                              case "day_month":
+                                return `${ordX} Day of the month`;
+                              case "business_day_quarter":
+                                return `${ordX} Business Day of Quarter ${y}`;
+                              case "day_quarter":
+                                return `${ordX} Day of Quarter ${y}`;
+                              case "business_day_halfyear":
+                                return `${ordX} Business Day of Half yearly ${y}`;
+                              case "day_halfyear":
+                                return `${ordX} Day of Half yearly ${y}`;
+                              case "business_day_annually":
+                                return `${ordX} Business Day of annually ${y}`;
+                              case "day_annually":
+                                return `${ordX} Day of annually ${y}`;
+                              default:
+                                return "-";
+                            }
+                          })()}
+                        </b>
+                        <br />
+                      </>
+                    ) : sch.weekdays && sch.weekdays.length > 0 ? (
+                      sch.weekdays.join(", ")
+                    ) : (
+                      "—"
+                    )}
+                    <br />
+                    <b>Time:</b> {sch.time || "—"}
+                    <br />
+                    <b>Timezone:</b> {sch.timezone || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      {sch.paused ? (
+                        <Button
+                          size="small"
+                          color="success"
+                          startIcon={<PlayArrowIcon />}
+                          onClick={async () => {
+                            await axios.post(`/schedules/${sch.id}/resume`);
+                            fetchSchedules();
+                          }}
+                        >
+                          Resume
+                        </Button>
+                      ) : (
+                        <Button
+                          size="small"
+                          color="warning"
+                          startIcon={<PauseIcon />}
+                          onClick={async () => {
+                            await axios.post(`/schedules/${sch.id}/pause`);
+                            fetchSchedules();
+                          }}
+                        >
+                          Pause
+                        </Button>
+                      )}
+                      <Button
+                        size="small"
+                        color="error"
+                        startIcon={<DeleteIcon />}
+                        onClick={() => handleDelete(sch.id)}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        size="small"
+                        color="primary"
+                        startIcon={<EditIcon />}
+                        onClick={() => navigate(`/scheduler/edit/${sch.id}`)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        size="small"
+                        color="secondary"
+                        startIcon={<HistoryIcon />}
+                        onClick={() =>
+                          navigate(`/jobs/${sch.jobId}/run-history`)
+                        }
+                      >
+                        Run History
+                      </Button>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 }
 
