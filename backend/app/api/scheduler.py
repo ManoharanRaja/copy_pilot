@@ -1,7 +1,8 @@
 import os
 import json
-from fastapi import APIRouter, HTTPException
 import uuid
+from fastapi import APIRouter, HTTPException
+from filelock import FileLock
 
 router = APIRouter()
 SCHEDULE_FILE = "backend/data/schedules.json"
@@ -13,8 +14,9 @@ def load_schedules():
         return json.load(f)
 
 def save_schedules(schedules):
-    with open(SCHEDULE_FILE, "w") as f:
-        json.dump(schedules, f, indent=2)
+    with FileLock(SCHEDULE_FILE + ".lock"):
+        with open(SCHEDULE_FILE, "w") as f:
+            json.dump(schedules, f, indent=2)
 
 @router.get("/schedules")
 def get_schedules():

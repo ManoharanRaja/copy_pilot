@@ -2,9 +2,12 @@ export function validateJob(form) {
   const errors = {};
 
   // Allow [$NAME] and [#NAME]
-  const placeholderRegex = /^\[(\$|#)\w+\]$/;
+  const placeholderRegex = /\[(\$|#)\w+\]/; // <-- not ^...$ so it matches inside a string
   const folderSegmentRegex = /^([\w\-\s\.]+|\[(\$|#)\w+\])$/;
 
+  // Updated: allow placeholders anywhere in the file mask
+  const fileMaskWithPlaceholderRegex =
+    /^([\w,\s-]*\[(\$|#)\w+\][\w,\s-]*)+(\*|\.\w+|\*\.?\w*)*$/;
   const fileMaskRegex = /^(\*|\w+|\w+\*|\*\.\w+|\w+\.\w+|\w+\*\.?\w*)$/;
   const directFileNameRegex = /^[\w,\s-]+\.[A-Za-z]{2,}$/;
   const driveLetterRegex = /^[a-zA-Z]:\\/;
@@ -112,7 +115,7 @@ export function validateJob(form) {
     validateAzureFolder(form.target, "target");
   }
 
-  // --- File Mask validation (allow both [$MASK] and [#MASK]) ---
+  // --- File Mask validation (allow placeholders anywhere in the mask) ---
   if (
     (!form.sourceFileMask || form.sourceFileMask.trim() === "") &&
     form.targetFileMask &&
@@ -132,24 +135,24 @@ export function validateJob(form) {
       "Target File Mask should also be a direct file name if Source File Mask is a direct file name.";
   }
 
-  if (
-    form.sourceFileMask &&
-    !placeholderRegex.test(form.sourceFileMask) &&
-    !fileMaskRegex.test(form.sourceFileMask) &&
-    !directFileNameRegex.test(form.sourceFileMask)
-  ) {
-    errors.sourceFileMask =
-      "Enter a valid file mask (e.g. *.csv), direct file name (e.g. test.csv), or placeholder (e.g. [$MASK] or [#MASK]).";
+  function isValidFileMask(mask) {
+    return (
+      !mask ||
+      placeholderRegex.test(mask) ||
+      fileMaskRegex.test(mask) ||
+      directFileNameRegex.test(mask) ||
+      fileMaskWithPlaceholderRegex.test(mask)
+    );
   }
 
-  if (
-    form.targetFileMask &&
-    !placeholderRegex.test(form.targetFileMask) &&
-    !fileMaskRegex.test(form.targetFileMask) &&
-    !directFileNameRegex.test(form.targetFileMask)
-  ) {
+  if (form.sourceFileMask && !isValidFileMask(form.sourceFileMask)) {
+    errors.sourceFileMask =
+      "Enter a valid file mask (e.g. *.csv), direct file name (e.g. test.csv), placeholder (e.g. [$MASK] or [#MASK]), or a mask with placeholders (e.g. source_[#TodayAsyyyyMMdd].csv).";
+  }
+
+  if (form.targetFileMask && !isValidFileMask(form.targetFileMask)) {
     errors.targetFileMask =
-      "Enter a valid file mask (e.g. *.csv), direct file name (e.g. test.csv), or placeholder (e.g. [$MASK] or [#MASK]).";
+      "Enter a valid file mask (e.g. *.csv), direct file name (e.g. test.csv), placeholder (e.g. [$MASK] or [#MASK]), or a mask with placeholders (e.g. source_[#TodayAsyyyyMMdd].csv).";
   }
 
   if (

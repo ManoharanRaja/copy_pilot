@@ -1,7 +1,5 @@
 from cryptography.fernet import Fernet
 
-ENCRYPTION_KEY = b'kQv3w7l9v8QvK5gkK8kQvK5gkK8kQvK5gkK8kQvK5gk='  # Replace with your actual key
-
 def generate_key():
     return Fernet.generate_key()
 

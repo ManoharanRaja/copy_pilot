@@ -2,6 +2,11 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 import uuid
 
+class TimeTravelConfig(BaseModel):
+    enabled: bool = False
+    from_date: Optional[str] = None  # Format: "YYYY-MM-DD"
+    to_date: Optional[str] = None    # Format: "YYYY-MM-DD"
+
 class CopyJob(BaseModel):
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
@@ -16,3 +21,9 @@ class CopyJob(BaseModel):
     target: str
     targetFileMask: Optional[str] = None
     local_variables: List[Dict[str, Any]] = Field(default_factory=list)
+    time_travel: Optional[TimeTravelConfig] = Field(default_factory=TimeTravelConfig)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    created_on: Optional[str] = None  # ISO format string
+    updated_on: Optional[str] = None  # ISO format string
+    latest_run_result: Optional[Dict[str, Any]] = None  # To store latest run info
