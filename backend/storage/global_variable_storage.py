@@ -1,8 +1,9 @@
 import json
 import os
 from filelock import FileLock
+from backend.config.settings import DATA_DIR
 
-FILE = "backend/data/global_variables.json"
+FILE = os.path.join(DATA_DIR, "global_variables.json")
 
 def load_global_variables():
     if not os.path.exists(FILE):

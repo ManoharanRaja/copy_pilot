@@ -1,8 +1,9 @@
 import os
 import json
 from filelock import FileLock
+from backend.config.settings import DATA_DIR
 
-DATA_SOURCE_FILE = "backend/data/data_sources.json"
+DATA_SOURCE_FILE = os.path.join(DATA_DIR, "data_sources.json")
 
 def load_data_sources():
     if not os.path.exists(DATA_SOURCE_FILE):
@@ -27,8 +28,7 @@ def save_data_sources(data_sources):
     with FileLock(DATA_SOURCE_FILE+".lock"):
         with open(DATA_SOURCE_FILE, "w") as f:
             json.dump(data_sources, f, indent=2)
-        
-        
+               
 def load_data_source_by_name(name):
     with open(DATA_SOURCE_FILE, "r") as f:
         sources = json.load(f)

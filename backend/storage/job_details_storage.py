@@ -1,8 +1,9 @@
 import os
 import json
 from filelock import FileLock
+from backend.config.settings import DATA_DIR
 
-JOBS_FILE = "backend/data/job_details.json"
+JOBS_FILE = os.path.join(DATA_DIR, "job_details.json")
 
 def load_jobs():
     if os.path.exists(JOBS_FILE):

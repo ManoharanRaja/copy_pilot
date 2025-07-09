@@ -2,17 +2,18 @@ import json
 import os
 from datetime import datetime
 from filelock import FileLock
+from backend.config.settings import DATA_DIR
 
 def load_run_history(job_id):
-    history_file = f"backend/data/run_history/run_history_{job_id}.json"
+    history_file = os.path.join(DATA_DIR, "run_history", f"run_history_{job_id}.json")
     if os.path.exists(history_file):
         with open(history_file, "r") as f:
             return json.load(f)
     return []
 
 def save_run_history(job_id, history):
-    with FileLock(f"backend/data/run_history/run_history_{job_id}.json.lock"):
-        history_file = f"backend/data/run_history/run_history_{job_id}.json"
+    with FileLock(os.path.join(DATA_DIR, "run_history", f"run_history_{job_id}.lock")):
+        history_file = os.path.join(DATA_DIR, "run_history", f"run_history_{job_id}.json")
         with open(history_file, "w") as f:
             json.dump(history, f, indent=2)
 
