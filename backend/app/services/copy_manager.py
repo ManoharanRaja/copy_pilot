@@ -12,7 +12,11 @@ def get_azure_config_by_id(azure_id):
     if not ds:
         raise ValueError(f"Azure Data Source with id {azure_id} not found")
     config = ds["config"]
-    config["account_key"] = decrypt(config["account_key"], ENCRYPTION_KEY)
+    if "account_key" in config and config["account_key"]:
+        config["account_key"] = decrypt(config["account_key"], ENCRYPTION_KEY)
+    if "sas_token" in config and config["sas_token"]:
+        config["sas_token"] = decrypt(config["sas_token"], ENCRYPTION_KEY)
+      
     return config
 
 def copy_local_to_local(source, target, file_mask, _=None):
@@ -50,14 +54,14 @@ def copy_local_to_azure(source, target, file_mask, azure_config):
     try:
         account_name = azure_config["account_name"]
         account_key = azure_config["account_key"]
+        sas_token = azure_config.get("sas_token")
         filesystem = target.get("filesystem")
         directory = target.get("directory", "")
 
         # Connect to Azure Data Lake
         service_client = get_adl_service_client(account_name, account_key)
         file_system_client = service_client.get_file_system_client(filesystem)
-        dir_client = file_system_client.get_directory_client(directory)
-
+        
         # List local files matching the mask
         if not os.path.exists(source):
             raise FileNotFoundError(f"Source folder '{source}' does not exist.")
@@ -88,18 +92,24 @@ def copy_azure_to_local(source, target, file_mask, azure_config):
     try:
         account_name = azure_config["account_name"]
         account_key = azure_config["account_key"]
+        sas_token = azure_config.get("sas_token")
         filesystem = source.get("filesystem")
-        directory = source.get("directory", "")
-        service_client = get_adl_service_client(account_name, account_key)
+        directory = source.get("directory", "")       
+        service_client = get_adl_service_client(account_name, account_key=account_key, sas_token=sas_token,container=filesystem)
         file_system_client = service_client.get_file_system_client(filesystem)
-        dir_client = file_system_client.get_directory_client(directory)
-        paths = dir_client.get_paths()
+        try:
+            paths = file_system_client.get_paths(path=directory)          
+        except Exception as e:          
+            raise Exception(f"Error retrieving paths from Azure: {e}")
         source_files = []
         for path in paths:
             if not path.is_directory:
-                filename = os.path.basename(path.name)
-                if fnmatch.fnmatch(filename, file_mask):
-                    source_files.append(path.name)
+                relative_path = path.name[len(directory):].lstrip("/") if directory else path.name
+                if "/" not in relative_path:  # Only include files that are immediate children
+                    filename = os.path.basename(path.name)
+                    if fnmatch.fnmatch(filename, file_mask):
+                        source_files.append(path.name)
+                        
         if not os.path.exists(target):
             os.makedirs(target)
         if not source_files:
@@ -132,31 +142,35 @@ def copy_azure_to_azure(source, target, file_mask, configs):
         # Use configs if provided, else fall back to source/target dicts
         src_account_name = configs.get("source_azure", {}).get("account_name") or source.get("account_name")
         src_account_key = configs.get("source_azure", {}).get("account_key") or source.get("account_key")
+        src_sas_token = configs.get("source_azure", {}).get("sas_token") or source.get("sas_token")
         tgt_account_name = configs.get("target_azure", {}).get("account_name") or target.get("account_name")
         tgt_account_key = configs.get("target_azure", {}).get("account_key") or target.get("account_key")
-
+        tgt_sas_token = configs.get("target_azure", {}).get("sas_token") or target.get("sas_token") 
+        
         src_filesystem = source.get("filesystem")
         src_directory = source.get("directory", "")
         tgt_filesystem = target.get("filesystem")
         tgt_directory = target.get("directory", "")
 
         # Source client
-        src_service_client = get_adl_service_client(src_account_name, src_account_key)
+        src_service_client = get_adl_service_client(src_account_name, account_key=src_account_key, sas_token=src_sas_token, container=src_filesystem)
         src_fs_client = src_service_client.get_file_system_client(src_filesystem)
-        src_dir_client = src_fs_client.get_directory_client(src_directory)
-
+        
         # Target client (may be different account)
-        tgt_service_client = get_adl_service_client(tgt_account_name, tgt_account_key)
+        tgt_service_client = get_adl_service_client(tgt_account_name, account_key=tgt_account_key, sas_token=tgt_sas_token, container=tgt_filesystem)
         tgt_fs_client = tgt_service_client.get_file_system_client(tgt_filesystem)
 
         # List source files
-        paths = src_dir_client.get_paths()
+        paths = src_fs_client.get_paths(path=src_directory)
         source_files = []
         for path in paths:
             if not path.is_directory:
-                filename = os.path.basename(path.name)
-                if fnmatch.fnmatch(filename, file_mask):
-                    source_files.append(path.name)
+                relative_path = path.name[len(src_directory):].lstrip("/") if src_directory else path.name
+                if "/" not in relative_path:  # Only include files that are immediate children
+                    filename = os.path.basename(path.name)
+                    if fnmatch.fnmatch(filename, file_mask):
+                        source_files.append(path.name)
+                        
         if not source_files:
             raise Exception(f"No files matching '{file_mask}' found in Azure directory '{src_directory}'.")
         copied_files = []

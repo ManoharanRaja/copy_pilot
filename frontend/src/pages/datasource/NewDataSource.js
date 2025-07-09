@@ -9,6 +9,11 @@ import {
   Stack,
   Alert,
   CircularProgress,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
+  FormLabel,
+  FormControl,
 } from "@mui/material";
 
 function NewDataSource() {
@@ -18,8 +23,10 @@ function NewDataSource() {
     type: "Azure Data Lake Storage",
     account_name: "",
     account_key: "",
+    sas_token: "",
     container: "",
   });
+  const [credentialType, setCredentialType] = useState("account_key");
   const [testStatus, setTestStatus] = useState(null); // null | "success" | "fail"
   const [testing, setTesting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -39,11 +46,26 @@ function NewDataSource() {
     setErrors({});
   };
 
+  const handleCredentialTypeChange = (e) => {
+    const value = e.target.value;
+    setCredentialType(value);
+    setForm({
+      ...form,
+      account_key: value === "account_key" ? form.account_key : "",
+      sas_token: value === "sas_token" ? form.sas_token : "",
+    });
+    setErrors({});
+    setTestStatus(null);
+  };
+
   const validate = () => {
     const errs = {};
     if (!form.name) errs.name = "Name is required";
     if (!form.account_name) errs.account_name = "Account Name is required";
-    if (!form.account_key) errs.account_key = "Account Key is required";
+    if (credentialType === "account_key" && !form.account_key)
+      errs.account_key = "Account Key is required";
+    if (credentialType === "sas_token" && !form.sas_token)
+      errs.account_key = "SAS Token is required";
     return errs;
   };
 
@@ -60,7 +82,8 @@ function NewDataSource() {
     try {
       const config = {
         account_name: form.account_name,
-        account_key: form.account_key,
+        account_key: credentialType === "account_key" ? form.account_key : "",
+        sas_token: credentialType === "sas_token" ? form.sas_token : "",
         container: form.container,
       };
       const res = await axios.post("/datasources/test", {
@@ -102,7 +125,8 @@ function NewDataSource() {
         type: form.type,
         config: {
           account_name: form.account_name,
-          account_key: form.account_key,
+          account_key: credentialType === "account_key" ? form.account_key : "",
+          sas_token: credentialType === "sas_token" ? form.sas_token : "",
           container: form.container,
         },
       });
@@ -157,7 +181,6 @@ function NewDataSource() {
             maxWidth: 500,
           }}
         >
-          {/* ...fields and buttons as before... */}
           <TextField
             label="Name"
             name="name"
@@ -181,15 +204,50 @@ function NewDataSource() {
               }.dfs.core.windows.net/`
             }
           />
+          <FormControl>
+            <FormLabel>Authentication Method</FormLabel>
+            <RadioGroup
+              row
+              value={credentialType}
+              onChange={handleCredentialTypeChange}
+            >
+              <FormControlLabel
+                value="account_key"
+                control={<Radio />}
+                label="Access Key"
+              />
+              <FormControlLabel
+                value="sas_token"
+                control={<Radio />}
+                label="SAS Token"
+              />
+            </RadioGroup>
+          </FormControl>
           <TextField
             label="Account Key"
             name="account_key"
             type="password"
             value={form.account_key}
             onChange={handleChange}
-            required
-            error={!!errors.account_key}
-            helperText={errors.account_key}
+            required={credentialType === "account_key"}
+            disabled={credentialType !== "account_key"}
+            error={!!errors.account_key && credentialType === "account_key"}
+            helperText={
+              credentialType === "account_key" ? errors.account_key : ""
+            }
+          />
+          <TextField
+            label="SAS Token"
+            name="sas_token"
+            type="password"
+            value={form.sas_token}
+            onChange={handleChange}
+            required={credentialType === "sas_token"}
+            disabled={credentialType !== "sas_token"}
+            error={!!errors.account_key && credentialType === "sas_token"}
+            helperText={
+              credentialType === "sas_token" ? errors.account_key : ""
+            }
           />
           <TextField
             label="Container (Optional)"

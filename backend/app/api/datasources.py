@@ -21,10 +21,12 @@ def add_data_source(ds: DataSource):
     # Check for unique name (case-insensitive)
     if any(d["name"].lower() == ds.name.lower() for d in data_sources):
         raise HTTPException(status_code=400, detail="Data source name already exists.")
-    # Encrypt account_key if present
-    if ds.type == "Azure Data Lake Storage" and "account_key" in ds.config:
-        ds.config["account_key"] = encrypt(ds.config["account_key"], ENCRYPTION_KEY)
-    # Dynamically assign the id
+    # Encrypt account_key or sas_token if present
+    if ds.type == "Azure Data Lake Storage":
+        if "account_key" in ds.config and ds.config["account_key"]:
+            ds.config["account_key"] = encrypt(ds.config["account_key"], ENCRYPTION_KEY)
+        if "sas_token" in ds.config and ds.config["sas_token"]:
+            ds.config["sas_token"] = encrypt(ds.config["sas_token"], ENCRYPTION_KEY)
     data_sources.append(ds.dict())
     save_data_sources(data_sources)
     return ds
@@ -47,9 +49,12 @@ def update_data_source(ds_id: str, ds: DataSource):
             # Prevent name duplication (except for itself)
             if any(d["name"].lower() == ds.name.lower() and str(d["id"]) != str(ds_id) for d in data_sources):
                 raise HTTPException(status_code=400, detail="Data source name already exists.")
-            # Encrypt account_key if present and changed
-            if ds.type == "Azure Data Lake Storage" and "account_key" in ds.config:                     
-                ds.config["account_key"] = encrypt(ds.config["account_key"], ENCRYPTION_KEY)
+            # Encrypt account_key or sas_token if present and changed
+            if ds.type == "Azure Data Lake Storage":
+                if "account_key" in ds.config and ds.config["account_key"]:
+                    ds.config["account_key"] = encrypt(ds.config["account_key"], ENCRYPTION_KEY)
+                if "sas_token" in ds.config and ds.config["sas_token"]:
+                    ds.config["sas_token"] = encrypt(ds.config["sas_token"], ENCRYPTION_KEY)
             ds.id = ds_id  # Ensure ID stays the same
             data_sources[idx] = ds.dict()
             found = True
@@ -69,14 +74,16 @@ async def test_data_source(request: Request):
         def do_test():
             account_name = config.get("account_name")
             account_key = config.get("account_key")
+            sas_token = config.get("sas_token")
             container = config.get("container")
-            if not (account_name and account_key):
-                return {"success": False, "message": "Missing required fields."}
-            success, message = test_adls_connection(account_name, account_key, container)
+            # Require at least one of account_key or sas_token
+            if not (account_name and (account_key or sas_token)):
+                return {"success": False, "message": "Account Key or SAS Token is required."}
+            # Use the correct credential for testing
+            success, message = test_adls_connection(account_name, account_key, container, sas_token=sas_token)
             return {"success": success, "message": message}
 
         result = await run_in_threadpool(do_test)
         return JSONResponse(result)
     else:
         return JSONResponse({"success": False, "message": "Unsupported data source type."})
-
