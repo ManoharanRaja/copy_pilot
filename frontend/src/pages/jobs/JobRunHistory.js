@@ -13,11 +13,8 @@ import {
   Box,
   Collapse,
   Alert,
-  Stack,
-  Select,
+  Menu,
   MenuItem,
-  FormControl,
-  InputLabel,
 } from "@mui/material";
 
 function JobRunHistory() {
@@ -32,6 +29,8 @@ function JobRunHistory() {
   const [schedulers, setSchedulers] = useState([]);
   const [archives, setArchives] = useState([]);
   const [selectedArchive, setSelectedArchive] = useState("main");
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
 
   // Fetch schedulers for mapping ID to name
   const fetchSchedulers = async () => {
@@ -155,38 +154,38 @@ function JobRunHistory() {
           Back to Jobs
         </Button>
         <Box sx={{ flex: 1 }} />
-        <FormControl
-          sx={{
-            minWidth: 200,
-            bgcolor: "background.paper",
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": {
-                borderColor: "rgba(25, 118, 210, 0.5)", // match outlined button color
-              },
-              "&:hover fieldset": {
-                borderColor: "primary.main",
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: "primary.main",
-              },
-            },
-          }}
+        <Button
           variant="outlined"
+          sx={{ ml: 2 }}
+          onClick={(e) => setAnchorEl(e.currentTarget)}
         >
-          <InputLabel>History Runs</InputLabel>
-          <Select
-            value={selectedArchive}
-            label="History Runs"
-            onChange={(e) => setSelectedArchive(e.target.value)}
+          {selectedArchive === "main"
+            ? "Latest Runs"
+            : `Archive ${selectedArchive}`}
+        </Button>
+        <Menu anchorEl={anchorEl} open={open} onClose={() => setAnchorEl(null)}>
+          <MenuItem
+            selected={selectedArchive === "main"}
+            onClick={() => {
+              setSelectedArchive("main");
+              setAnchorEl(null);
+            }}
           >
-            <MenuItem value="main">Main (Latest Runs)</MenuItem>
-            {archives.map((a) => (
-              <MenuItem key={a} value={a}>
-                Archive {a}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            Main (Latest Runs)
+          </MenuItem>
+          {archives.map((a) => (
+            <MenuItem
+              key={String(a)}
+              selected={selectedArchive === String(a)}
+              onClick={() => {
+                setSelectedArchive(String(a));
+                setAnchorEl(null);
+              }}
+            >
+              Archive {a}
+            </MenuItem>
+          ))}
+        </Menu>
       </Box>
 
       {isPolling && (

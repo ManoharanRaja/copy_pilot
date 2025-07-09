@@ -15,8 +15,7 @@ from backend.storage.global_variable_storage import load_global_variables
 from backend.utils.replace_placeholders import resolve_placeholders, find_missing_placeholders
 from backend.storage.job_details_storage import load_jobs, save_jobs
 from backend.utils.time_travel_utils import get_mocked_datetime_env, patch_datetime_calls
-
-MAX_RUN_HISTORY = 1 # Number of entries to keep in main file
+from backend.config.settings import MAX_RUN_HISTORY
 
 router = APIRouter(prefix="/jobs")
 RUN_HISTORY_DIR = "backend/data/run_history"
@@ -31,15 +30,39 @@ def rotate_run_history(job_id, run_history_dir=RUN_HISTORY_DIR):
         runs = json.load(f)
 
     if len(runs) > MAX_RUN_HISTORY:
-        # Find next archive index
-        archives = glob.glob(os.path.join(run_history_dir, f"run_history_{job_id}_archive_*.json"))
-        archive_idx = len(archives) + 1
-        archive_file = os.path.join(run_history_dir, f"run_history_{job_id}_archive_{archive_idx}.json")
+        # Find all archive files and their indices
+        pattern = os.path.join(run_history_dir, f"run_history_{job_id}_archive_*.json")
+        archives = sorted(glob.glob(pattern))
+        last_archive_idx = 0
+        last_archive_runs = []
+        if archives:
+            last_archive_file = archives[-1]
+            last_archive_idx = int(os.path.splitext(os.path.basename(last_archive_file))[0].split("_archive_")[-1])
+            with open(last_archive_file, "r", encoding="utf-8") as f:
+                last_archive_runs = json.load(f)
+        else:
+            last_archive_file = None
 
-        # Move oldest entries to archive
+        # Runs to archive (oldest runs)
         to_archive = runs[:-MAX_RUN_HISTORY]
-        with open(archive_file, "w", encoding="utf-8") as f:
-            json.dump(to_archive, f, indent=2)
+
+        # If last archive is not full, append to it
+        if last_archive_file and len(last_archive_runs) < MAX_RUN_HISTORY:
+            space_left = MAX_RUN_HISTORY - len(last_archive_runs)
+            to_add = to_archive[:space_left]
+            last_archive_runs.extend(to_add)
+            with open(last_archive_file, "w", encoding="utf-8") as f:
+                json.dump(last_archive_runs, f, indent=2)
+            to_archive = to_archive[space_left:]
+
+        # If still runs left to archive, create new archive(s)
+        while to_archive:
+            last_archive_idx += 1
+            archive_file = os.path.join(run_history_dir, f"run_history_{job_id}_archive_{last_archive_idx}.json")
+            chunk = to_archive[:MAX_RUN_HISTORY]
+            with open(archive_file, "w", encoding="utf-8") as f:
+                json.dump(chunk, f, indent=2)
+            to_archive = to_archive[MAX_RUN_HISTORY:]
 
         # Keep only the most recent entries in the main file
         runs = runs[-MAX_RUN_HISTORY:]
