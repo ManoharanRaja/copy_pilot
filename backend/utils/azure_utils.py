@@ -3,7 +3,7 @@ from azure.core.exceptions import AzureError
 import concurrent.futures
 import socket
 
-def get_adl_service_client(account_name, account_key=None, timeout=10, sas_token=None):
+def get_adl_service_client(account_name, account_key=None, sas_token=None, container=None, timeout=10):
     """
     Returns an authenticated DataLakeServiceClient for the given account.
     Uses either account_key or sas_token for authentication.
@@ -14,17 +14,30 @@ def get_adl_service_client(account_name, account_key=None, timeout=10, sas_token
     :param timeout: Timeout in seconds for authentication
     """
     def connect():
-        credential = sas_token if sas_token else account_key
+        # Ensure SAS token starts with '?'
+        credential = None
+        if sas_token:
+            credential = sas_token if sas_token.startswith("?") else "?" + sas_token
+        elif account_key:
+            credential = account_key
         if not credential:
             raise Exception("Either account_key or sas_token must be provided.")
+        
         client = DataLakeServiceClient(
             account_url=f"https://{account_name}.dfs.core.windows.net",
             credential=credential
         )
-        # This call will fail fast if the account does not exist or credentials are invalid
-        list(client.list_file_systems())
+        
+        # Validate connection by listing file systems or paths
+        if container:
+            fs_client = client.get_file_system_client(container)
+            # Try listing paths in the container root to validate access
+            list(fs_client.get_paths())
+        else:
+            # Try listing file systems to validate account-level access
+            list(client.list_file_systems())
         return client
-
+    
     try:
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(connect)
@@ -45,7 +58,7 @@ def test_adls_connection(account_name, account_key=None, container=None, timeout
     Returns (success: bool, message: str)
     """
     try:
-        client = get_adl_service_client(account_name, account_key, timeout=timeout, sas_token=sas_token)
+        client = get_adl_service_client(account_name, account_key, sas_token=sas_token, container=container, timeout=timeout)
         if container:
             fs_client = client.get_file_system_client(container)
             # Try listing paths to verify access to the container
