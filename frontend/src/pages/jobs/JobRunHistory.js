@@ -14,6 +14,10 @@ import {
   Collapse,
   Alert,
   Stack,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 
 function JobRunHistory() {
@@ -26,6 +30,8 @@ function JobRunHistory() {
   const [expandedDateRun, setExpandedDateRun] = useState(null);
   const [jobName, setJobName] = useState("");
   const [schedulers, setSchedulers] = useState([]);
+  const [archives, setArchives] = useState([]);
+  const [selectedArchive, setSelectedArchive] = useState("main");
 
   // Fetch schedulers for mapping ID to name
   const fetchSchedulers = async () => {
@@ -37,8 +43,21 @@ function JobRunHistory() {
     }
   };
 
-  const fetchHistory = async () => {
-    const res = await axios.get(`/jobs/${id}/run-history`);
+  const fetchArchives = async () => {
+    try {
+      const res = await axios.get(`/jobs/${id}/run-history-archives`);
+      setArchives(res.data.archives || []);
+    } catch {
+      setArchives([]);
+    }
+  };
+
+  const fetchHistory = async (archive = selectedArchive) => {
+    let url = `/jobs/${id}/run-history`;
+    if (archive !== "main") {
+      url += `?archive=${archive}`;
+    }
+    const res = await axios.get(url);
     setRunHistory(res.data || []);
   };
 
@@ -52,8 +71,14 @@ function JobRunHistory() {
     fetchHistory();
     fetchJobName();
     fetchSchedulers();
+    fetchArchives();
     // eslint-disable-next-line
   }, [id]);
+
+  useEffect(() => {
+    fetchHistory(selectedArchive);
+    // eslint-disable-next-line
+  }, [selectedArchive]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -66,13 +91,13 @@ function JobRunHistory() {
     let pollInterval = null;
     if (isPolling) {
       pollInterval = setInterval(() => {
-        fetchHistory();
-      }, 3000); // Poll every 3 seconds
+        fetchHistory(selectedArchive);
+      }, 3000);
     }
     return () => {
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [isPolling]);
+  }, [isPolling, selectedArchive]);
 
   useEffect(() => {
     if (isPolling && runHistory.length > 0) {
@@ -120,13 +145,50 @@ function JobRunHistory() {
         </Typography>
       </Box>
 
-      <Button
-        variant="outlined"
-        sx={{ mb: 2 }}
-        onClick={() => navigate("/jobs")}
-      >
-        Back to Jobs
-      </Button>
+      {/* Flex row for Back button and Archive dropdown */}
+      <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+        <Button
+          variant="outlined"
+          onClick={() => navigate("/jobs")}
+          sx={{ mr: 2 }}
+        >
+          Back to Jobs
+        </Button>
+        <Box sx={{ flex: 1 }} />
+        <FormControl
+          sx={{
+            minWidth: 200,
+            bgcolor: "background.paper",
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": {
+                borderColor: "rgba(25, 118, 210, 0.5)", // match outlined button color
+              },
+              "&:hover fieldset": {
+                borderColor: "primary.main",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: "primary.main",
+              },
+            },
+          }}
+          variant="outlined"
+        >
+          <InputLabel>History Runs</InputLabel>
+          <Select
+            value={selectedArchive}
+            label="History Runs"
+            onChange={(e) => setSelectedArchive(e.target.value)}
+          >
+            <MenuItem value="main">Main (Latest Runs)</MenuItem>
+            {archives.map((a) => (
+              <MenuItem key={a} value={a}>
+                Archive {a}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
       {isPolling && (
         <Alert severity="info" sx={{ mb: 2 }}>
           Running... Please wait.

@@ -3,6 +3,7 @@ import json
 import uuid
 import io
 import sys
+import glob
 
 from fastapi.concurrency import run_in_threadpool
 from fastapi import APIRouter, HTTPException, Request
@@ -15,9 +16,36 @@ from backend.utils.replace_placeholders import resolve_placeholders, find_missin
 from backend.storage.job_details_storage import load_jobs, save_jobs
 from backend.utils.time_travel_utils import get_mocked_datetime_env, patch_datetime_calls
 
+MAX_RUN_HISTORY = 1 # Number of entries to keep in main file
+
 router = APIRouter(prefix="/jobs")
 RUN_HISTORY_DIR = "backend/data/run_history"
 os.makedirs(RUN_HISTORY_DIR, exist_ok=True)
+
+def rotate_run_history(job_id, run_history_dir=RUN_HISTORY_DIR):
+    main_file = os.path.join(run_history_dir, f"run_history_{job_id}.json")
+    if not os.path.exists(main_file):
+        return
+
+    with open(main_file, "r", encoding="utf-8") as f:
+        runs = json.load(f)
+
+    if len(runs) > MAX_RUN_HISTORY:
+        # Find next archive index
+        archives = glob.glob(os.path.join(run_history_dir, f"run_history_{job_id}_archive_*.json"))
+        archive_idx = len(archives) + 1
+        archive_file = os.path.join(run_history_dir, f"run_history_{job_id}_archive_{archive_idx}.json")
+
+        # Move oldest entries to archive
+        to_archive = runs[:-MAX_RUN_HISTORY]
+        with open(archive_file, "w", encoding="utf-8") as f:
+            json.dump(to_archive, f, indent=2)
+
+        # Keep only the most recent entries in the main file
+        runs = runs[-MAX_RUN_HISTORY:]
+        with open(main_file, "w", encoding="utf-8") as f:
+            json.dump(runs, f, indent=2)
+
 
 @router.post("/{job_id}/run")
 async def run_job(job_id: str, request: Request):
@@ -45,7 +73,8 @@ async def run_job(job_id: str, request: Request):
             scheduler_id=scheduler_id,
             extra_details={}
         )
-        # --- END NEW ---
+        rotate_run_history(job_id)  # Rotate history to keep size manageable
+        # --- END NEW ---   
         
         # Check for time travel config
         time_travel = job.get("time_travel", {})
@@ -168,6 +197,8 @@ async def run_job(job_id: str, request: Request):
                     "date_runs": date_runs
                 }
             )
+            # Rotate history to keep size manageable
+            rotate_run_history(job_id)
             return JSONResponse({
                 "success": all(r["success"] for r in date_runs),
                 "parent_run_id": parent_run_id,
@@ -186,6 +217,7 @@ async def run_job(job_id: str, request: Request):
                 scheduler_id=scheduler_id,
                 extra_details={"date_runs": [result]}
             )
+            rotate_run_history(job_id)  # Rotate history to keep size manageable
             return JSONResponse(result)
     except Exception as e:
         # Always log the failed run in run history for visibility in UI
@@ -198,12 +230,20 @@ async def run_job(job_id: str, request: Request):
             scheduler_id=None,
             extra_details={"date_runs": [], "error_detail": str(e)}
         )
+        rotate_run_history(job_id)
         # Return the error message to the frontend
         raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
 
 @router.get("/{job_id}/run-history")
-def get_run_history(job_id: str):
-    history_file = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}.json")
+def get_run_history(job_id: str, archive: int = None):
+    """
+    Returns the main run history file by default.
+    If archive=N is provided, returns the Nth archive file.
+    """
+    if archive is not None:
+        history_file = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}_archive_{archive}.json")
+    else:
+        history_file = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}.json")
     try:
         if os.path.exists(history_file):
             with open(history_file, "r") as f:
@@ -213,3 +253,17 @@ def get_run_history(job_id: str):
         return JSONResponse(history)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Failed to read run history.")
+    
+    
+@router.get("/{job_id}/run-history-archives")
+def list_run_history_archives(job_id: str):
+    """
+    Lists all archive files for a job.
+    """
+    pattern = os.path.join(RUN_HISTORY_DIR, f"run_history_{job_id}_archive_*.json")
+    archives = sorted(glob.glob(pattern))
+    archive_indices = [
+        int(os.path.splitext(os.path.basename(f))[0].split("_archive_")[-1])
+        for f in archives
+    ]
+    return JSONResponse({"archives": archive_indices})
